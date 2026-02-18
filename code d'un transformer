@@ -64,7 +64,7 @@ class MultiHeadAttention(nn.Module):
         return output
 
 
-class PositionWiseFeedForward(nn.Module):#la je ne sait pas ce que c'est j'ai pas trop d'idée probablement un apprentissage sur la position des mots mais ca fait aucun sens.
+class PositionWiseFeedForward(nn.Module):#la je ne sait pas ce que c'est j'ai pas trop d'idée
     def __init__(self, d_model, d_ff):
         super(PositionWiseFeedForward, self).__init__()
         self.fc1 = nn.Linear(d_model, d_ff)
@@ -134,7 +134,7 @@ class DecoderLayer(nn.Module):#crée le decodeur.
 #max_seq_length = longueur maximal de la sequence. En gros la taille de la phrase mais je ne sait pas dans quelle unité la mettre. 
 #Il prevoient de l'initialisé a 100.
 
-#dropout = 	pour evité le sur ajustement  des donnée on l'initialie en 0.1 ou 0.3 ...
+#dropout = 	pour evité le sur ajustement  des donnée on l'initialie en 0.1 ou 0.3 ... dans l'article il est initialiser a 0,1.
 #src_vocab_size, tgt_vocab_size   sont initialise a 5000 généralement.
 #dans l'article le nombre de tête dans le multihead attention est a 6 mais dans le code il recomande de le mettre a 8.
 #d model dans l'article il le mettaient a 512
@@ -216,8 +216,6 @@ for epoch in range(100):
     loss.backward()
     optimizer.step()
     print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
-
-
 
 
 transformer.eval()                            #pareil d'ou il sort
