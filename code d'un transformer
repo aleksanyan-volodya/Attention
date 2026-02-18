@@ -19,7 +19,7 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = num_heads # Number of attention heads
         self.d_k = d_model // num_heads # Dimension of each head's key, query, and value
         
-        # Linear layers for transforming inputs
+        # crée les matrice de poids utiliser pour la multihead attention.
         self.W_q = nn.Linear(d_model, d_model) # Query transformation
         self.W_k = nn.Linear(d_model, d_model) # Key transformation
         self.W_v = nn.Linear(d_model, d_model) # Value transformation
@@ -64,7 +64,7 @@ class MultiHeadAttention(nn.Module):
         return output
 
 
-class PositionWiseFeedForward(nn.Module):
+class PositionWiseFeedForward(nn.Module):#la je ne sait pas ce que c'est j'ai pas trop d'idée probablement un apprentissage sur la position des mots mais ca fait aucun sens.
     def __init__(self, d_model, d_ff):
         super(PositionWiseFeedForward, self).__init__()
         self.fc1 = nn.Linear(d_model, d_ff)
@@ -76,7 +76,7 @@ class PositionWiseFeedForward(nn.Module):
 
 
 
-  class PositionalEncoding(nn.Module):
+  class PositionalEncoding(nn.Module):#les encode de position dans la sequence (les transforme en tableau de sinus et cosinus)
     def __init__(self, d_model, max_seq_length):
         super(PositionalEncoding, self).__init__()
         
@@ -84,7 +84,7 @@ class PositionWiseFeedForward(nn.Module):
         position = torch.arange(0, max_seq_length, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model))
         
-        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 0::2] = torch.sin(position * div_term)#la on les transforme
         pe[:, 1::2] = torch.cos(position * div_term)
         
         self.register_buffer('pe', pe.unsqueeze(0))
@@ -93,7 +93,7 @@ class PositionWiseFeedForward(nn.Module):
         return x + self.pe[:, :x.size(1)]
 
 
-  class EncoderLayer(nn.Module):
+  class EncoderLayer(nn.Module):#crée l'encoder
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(EncoderLayer, self).__init__()
         self.self_attn = MultiHeadAttention(d_model, num_heads)
@@ -102,14 +102,14 @@ class PositionWiseFeedForward(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, x, mask):
+    def forward(self, x, mask):#passage dans les module d'attention
         attn_output = self.self_attn(x, x, x, mask)
         x = self.norm1(x + self.dropout(attn_output))
         ff_output = self.feed_forward(x)
         x = self.norm2(x + self.dropout(ff_output))
         return x
 
-class DecoderLayer(nn.Module):
+class DecoderLayer(nn.Module):#crée le decodeur.
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(DecoderLayer, self).__init__()
         self.self_attn = MultiHeadAttention(d_model, num_heads)
@@ -120,7 +120,7 @@ class DecoderLayer(nn.Module):
         self.norm3 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, x, enc_output, src_mask, tgt_mask):
+    def forward(self, x, enc_output, src_mask, tgt_mask):#passage dans les modulkes d'attentions.
         attn_output = self.self_attn(x, x, x, tgt_mask)
         x = self.norm1(x + self.dropout(attn_output))
         attn_output = self.cross_attn(x, enc_output, enc_output, src_mask)
@@ -129,15 +129,25 @@ class DecoderLayer(nn.Module):
         x = self.norm3(x + self.dropout(ff_output))
         return x
 
+#d_ff = dimension interne dans le feed-forward.
+
+#max_seq_length = longueur maximal de la sequence. En gros la taille de la phrase mais je ne sait pas dans quelle unité la mettre. 
+#Il prevoient de l'initialisé a 100.
+
+#dropout = 	pour evité le sur ajustement  des donnée on l'initialie en 0.1 ou 0.3 ...
+#src_vocab_size, tgt_vocab_size   sont initialise a 5000 généralement.
+#dans l'article le nombre de tête dans le multihead attention est a 6 mais dans le code il recomande de le mettre a 8.
+#d model dans l'article il le mettaient a 512
+
 
 class Transformer(nn.Module):
     def __init__(self, src_vocab_size, tgt_vocab_size, d_model, num_heads, num_layers, d_ff, max_seq_length, dropout):
         super(Transformer, self).__init__()
-        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model)
+        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model)#modifie les donnée a evaluer pour pouvoir les comprendre
         self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model)
-        self.positional_encoding = PositionalEncoding(d_model, max_seq_length)
+        self.positional_encoding = PositionalEncoding(d_model, max_seq_length)#crée les encodement de position du model
 
-        self.encoder_layers = nn.ModuleList([EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])
+        self.encoder_layers = nn.ModuleList([EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])#crée les couche de encoder et decodeur
         self.decoder_layers = nn.ModuleList([DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])
 
         self.fc = nn.Linear(d_model, tgt_vocab_size)
@@ -151,8 +161,8 @@ class Transformer(nn.Module):
         tgt_mask = tgt_mask & nopeak_mask
         return src_mask, tgt_mask
 
-    def forward(self, src, tgt):
-        src_mask, tgt_mask = self.generate_mask(src, tgt)
+    def forward(self, src, tgt):#fait passer dans une boucle d'encodeur et de decodeur conformément au model de transformer.
+        src_mask, tgt_mask = self.generate_mask(src, tgt)#on peu ne pas le mettre dans notre code le car on a pas besoin de masuqer les chose dans les sequences.
         src_embedded = self.dropout(self.positional_encoding(self.encoder_embedding(src)))
         tgt_embedded = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
 
@@ -168,13 +178,33 @@ class Transformer(nn.Module):
         return output
 
 
-  transformer = Transformer(src_vocab_size, tgt_vocab_size, d_model, num_heads, num_layers, d_ff, max_seq_length, dropout)    #initialisation d'un transformer
+#quelque initialisation du model transformer a changer pour nos sequences potentielement.
+
+
+src_vocab_size = 5000
+tgt_vocab_size = 5000
+d_model = 512
+num_heads = 8
+num_layers = 6
+d_ff = 2048
+max_seq_length = 100
+dropout = 0.1
+
+transformer = Transformer(src_vocab_size, tgt_vocab_size, d_model, num_heads, num_layers, d_ff, max_seq_length, dropout) #genere un transformer.
+
+# Generate random sample data
+src_data = torch.randint(1, src_vocab_size, (64, max_seq_length))  # (batch_size, seq_length) les crée de maniere aleatoire les entrée et les sortie sous forme de sequence de nombre inutile donc.
+tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))  #cree les sortie.
 
 
 
 
-  criterion = nn.CrossEntropyLoss(ignore_index=0)
+criterion = nn.CrossEntropyLoss(ignore_index=0)
 optimizer = optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)
+
+
+#voir si on peu utiliser des optimiseurs different a chaque fois en faisant baisser le learning rate a chaque fois...
+#doc optim how to adjust learning rate.
 
 transformer.train()          #je ne sait pas d'ou sort cette methode elle n'est définie nulle part.
                              #c'est pour passer en mode apprentissage mais je ne sait pas d'ou ca vien dans le code
@@ -197,16 +227,9 @@ transformer.eval()                            #pareil d'ou il sort
 val_src_data = torch.randint(1, src_vocab_size, (64, max_seq_length))  # (batch_size, seq_length)
 val_tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))  # (batch_size, seq_length)
 
-with torch.no_grad():
+with torch.no_grad():#fait une boucle de transormer mais pas les notres.
+
 
     val_output = transformer(val_src_data, val_tgt_data[:, :-1])
     val_loss = criterion(val_output.contiguous().view(-1, tgt_vocab_size), val_tgt_data[:, 1:].contiguous().view(-1))
     print(f"Validation Loss: {val_loss.item()}")
-
-
-
-
-
-
-
-
