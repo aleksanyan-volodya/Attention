@@ -76,7 +76,7 @@ class PositionWiseFeedForward(nn.Module):#la je ne sait pas ce que c'est j'ai pa
 
 
 
-  class PositionalEncoding(nn.Module):#les encode de position dans la sequence (les transforme en tableau de sinus et cosinus)
+class PositionalEncoding(nn.Module):#les encode de position dans la sequence (les transforme en tableau de sinus et cosinus)
     def __init__(self, d_model, max_seq_length):
         super(PositionalEncoding, self).__init__()
         
@@ -93,7 +93,7 @@ class PositionWiseFeedForward(nn.Module):#la je ne sait pas ce que c'est j'ai pa
         return x + self.pe[:, :x.size(1)]
 
 
-  class EncoderLayer(nn.Module):#crée l'encoder
+class EncoderLayer(nn.Module):#crée l'encoder
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(EncoderLayer, self).__init__()
         self.self_attn = MultiHeadAttention(d_model, num_heads)
