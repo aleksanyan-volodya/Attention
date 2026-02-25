@@ -5,6 +5,8 @@
 
 This repository serves as a template for the class "Projet de Deep Learning" in the 1st year of Master "Mathématiques et Intelligence Artificielle" of Université Paris-Saclay. Namely, this repository contains the code of a toy [Streamlit](https://streamlit.io/) application.
 
+THIS IS A SORT OF BACKUP in order look back the orginal code easier if needed
+
 ## Content
 
 The user can select four modes in the sidebar of the application.
