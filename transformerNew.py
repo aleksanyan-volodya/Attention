@@ -180,54 +180,48 @@ class Transformer(nn.Module):
 
 #quelque initialisation du model transformer a changer pour nos sequences potentielement.
 
+if __name__ == "__main__":
+    src_vocab_size = 5000
+    tgt_vocab_size = 5000
+    d_model = 512
+    num_heads = 8
+    num_layers = 6
+    d_ff = 2048
+    max_seq_length = 100
+    dropout = 0.1
 
-src_vocab_size = 5000
-tgt_vocab_size = 5000
-d_model = 512
-num_heads = 8
-num_layers = 6
-d_ff = 2048
-max_seq_length = 100
-dropout = 0.1
+    transformer = Transformer(src_vocab_size, tgt_vocab_size, d_model, num_heads, num_layers, d_ff, max_seq_length, dropout) #genere un transformer.
 
-transformer = Transformer(src_vocab_size, tgt_vocab_size, d_model, num_heads, num_layers, d_ff, max_seq_length, dropout) #genere un transformer.
+    # Generate random sample data
+    src_data = torch.randint(1, src_vocab_size, (64, max_seq_length))  # (batch_size, seq_length) les crée de maniere aleatoire les entrée et les sortie sous forme de sequence de nombre inutile donc.
+    tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))  #cree les sortie.
 
-# Generate random sample data
-src_data = torch.randint(1, src_vocab_size, (64, max_seq_length))  # (batch_size, seq_length) les crée de maniere aleatoire les entrée et les sortie sous forme de sequence de nombre inutile donc.
-tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))  #cree les sortie.
+    criterion = nn.CrossEntropyLoss(ignore_index=0)
+    optimizer = optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)
 
+    #voir si on peu utiliser des optimiseurs different a chaque fois en faisant baisser le learning rate a chaque fois...
+    #doc optim how to adjust learning rate.
 
+    transformer.train()          #je ne sait pas d'ou sort cette methode elle n'est définie nulle part.
+                                #c'est pour passer en mode apprentissage mais je ne sait pas d'ou ca vien dans le code
 
-
-criterion = nn.CrossEntropyLoss(ignore_index=0)
-optimizer = optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)
-
-
-#voir si on peu utiliser des optimiseurs different a chaque fois en faisant baisser le learning rate a chaque fois...
-#doc optim how to adjust learning rate.
-
-transformer.train()          #je ne sait pas d'ou sort cette methode elle n'est définie nulle part.
-                             #c'est pour passer en mode apprentissage mais je ne sait pas d'ou ca vien dans le code
-
-for epoch in range(100):
-    optimizer.zero_grad()
-    output = transformer(src_data, tgt_data[:, :-1])
-    loss = criterion(output.contiguous().view(-1, tgt_vocab_size), tgt_data[:, 1:].contiguous().view(-1))
-    loss.backward()
-    optimizer.step()
-    print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
+    for epoch in range(100):
+        optimizer.zero_grad()
+        output = transformer(src_data, tgt_data[:, :-1])
+        loss = criterion(output.contiguous().view(-1, tgt_vocab_size), tgt_data[:, 1:].contiguous().view(-1))
+        loss.backward()
+        optimizer.step()
+        print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
 
 
-transformer.eval()                            #pareil d'ou il sort
-                                              #Apparament c'est pour passer en mode evaluation il n'apprend plus mais je ne voit pas ou le truc est initialiser.
+    transformer.eval()                            #pareil d'ou il sort
+                                                #Apparament c'est pour passer en mode evaluation il n'apprend plus mais je ne voit pas ou le truc est initialiser.
 
-# Generate random sample validation data
-val_src_data = torch.randint(1, src_vocab_size, (64, max_seq_length))  # (batch_size, seq_length)
-val_tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))  # (batch_size, seq_length)
+    # Generate random sample validation data
+    val_src_data = torch.randint(1, src_vocab_size, (64, max_seq_length))  # (batch_size, seq_length)
+    val_tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))  # (batch_size, seq_length)
 
-with torch.no_grad():#fait une boucle de transormer mais pas les notres.
-
-
-    val_output = transformer(val_src_data, val_tgt_data[:, :-1])
-    val_loss = criterion(val_output.contiguous().view(-1, tgt_vocab_size), val_tgt_data[:, 1:].contiguous().view(-1))
-    print(f"Validation Loss: {val_loss.item()}")
+    with torch.no_grad():#fait une boucle de transormer mais pas les notres.
+        val_output = transformer(val_src_data, val_tgt_data[:, :-1])
+        val_loss = criterion(val_output.contiguous().view(-1, tgt_vocab_size), val_tgt_data[:, 1:].contiguous().view(-1))
+        print(f"Validation Loss: {val_loss.item()}")
