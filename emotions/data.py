@@ -101,7 +101,12 @@ class IMDBDataLoader:
         print(f"Vocabulary size: {self.vocab.vocab_size}")
         return self.vocab
     
-    def process_and_create_loaders(self, max_seq_length: int,train_samples: int = 5000,test_samples: int = 2000,
+    def process_and_create_loaders(
+        self,
+        max_seq_length: int,
+        batch_size: int,
+        train_samples: int = 5000,
+        test_samples: int = 2000
     ) -> Tuple[DataLoader, DataLoader]:
         """Process data and create DataLoaders."""
 
@@ -121,3 +126,6 @@ class IMDBDataLoader:
             train_labels.append(self.train_split[i]["label"])
             if (i + 1) % 1000 == 0:
                 print(f"  {i + 1} processed")
+
+        train_texts = torch.stack(train_texts)
+        train_labels = torch.tensor(train_labels, dtype=torch.long)
