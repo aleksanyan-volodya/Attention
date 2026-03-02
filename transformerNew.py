@@ -35,9 +35,9 @@ class MultiHeadAttention(nn.Module):
         
         return torch.matmul(attn_probs, V)
         
-    def split_heads(self, x):
-        # Reshape the input to have num_heads for multi-head attention
-        batch_size, seq_length, d_model = x.size()
+    def split_heads(self, x: torch.Tensor) -> torch.Tensor:
+        """Reshape the input to have num_heads for multi-head attention"""
+        batch_size, seq_length, _ = x.size()
         return x.view(batch_size, seq_length, self.num_heads, self.d_k).transpose(1, 2)
         
     def combine_heads(self, x):
