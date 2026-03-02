@@ -17,4 +17,5 @@ from transformerNew import Transformer
 
 
 if __name__ == '__main__':
+	print(f"GPU available: {torch.cuda.is_available()}")
 	print("end :)")
