@@ -26,5 +26,23 @@ class Vocabulary:
 
         self.token_to_idx = {"<pad>": pad_idx, "<unk>": unk_idx}
         self.idx_to_token = {pad_idx: "<pad>", unk_idx: "<unk>"}
-        
+
         self.vocab_size = 2 # Start with pad and unk
+
+
+    def build_from_samples(self, samples: List[str], max_vocab_size: int = 20000) -> None:
+        """Build vocabulary from text samples."""
+        tokenizer = SmartTokenizer()
+        word_cnt = Counter()
+
+        for text in samples:
+            tokens = tokenizer.tokenize(text)
+            word_cnt.update(tokens)
+
+        most_common = word_cnt.most_common(max_vocab_size - 2)
+        for word, _ in most_common:
+            self.token_to_idx[word] = len(self.token_to_idx)
+            self.idx_to_token[len(self.idx_to_token)] = word
+
+        self.vocab_size = len(self.token_to_idx)
+
