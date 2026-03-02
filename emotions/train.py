@@ -11,6 +11,10 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from tqdm import tqdm
 
+import sys
+sys.path.append("..")
+from transformerNew import Transformer
+
 
 if __name__ == '__main__':
 	print("end :)")
