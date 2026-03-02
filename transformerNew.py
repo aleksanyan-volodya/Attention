@@ -40,24 +40,17 @@ class MultiHeadAttention(nn.Module):
         batch_size, seq_length, _ = x.size()
         return x.view(batch_size, seq_length, self.num_heads, self.d_k).transpose(1, 2)
         
-    def combine_heads(self, x):
-        # Combine the multiple heads back to original shape
+    def combine_heads(self, x: torch.Tensor) -> torch.Tensor:
+        """Combine the multiple heads back to original shape"""
         batch_size, _, seq_length, d_k = x.size()
         return x.transpose(1, 2).contiguous().view(batch_size, seq_length, self.d_model)
         
-    def forward(self, Q, K, V, mask=None):
-        # Apply linear transformations and split heads
+    def forward(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, mask=None) -> torch.Tensor:
         Q = self.split_heads(self.W_q(Q))
         K = self.split_heads(self.W_k(K))
         V = self.split_heads(self.W_v(V))
-        
-        # Perform scaled dot-product attention
         attn_output = self.scaled_dot_product_attention(Q, K, V, mask)
-        
-        # Combine heads and apply output transformation
-        output = self.W_o(self.combine_heads(attn_output))
-        return output
-
+        return self.W_o(self.combine_heads(attn_output))
 
 class PositionWiseFeedForward(nn.Module):#la je ne sait pas ce que c'est j'ai pas trop d'idée
     def __init__(self, d_model: int, d_ff: int):
