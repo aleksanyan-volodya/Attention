@@ -129,3 +129,23 @@ class IMDBDataLoader:
 
         train_texts = torch.stack(train_texts)
         train_labels = torch.tensor(train_labels, dtype=torch.long)
+
+
+        print(f"Processing {test_samples} test samples...")
+        test_texts, test_labels = [], []
+        
+        for i in range(test_samples):
+            processed = process_text(
+                self.test_split[i]["text"],
+                self.vocab,
+                max_seq_length,
+                self.vocab.pad_idx,
+            )
+            test_texts.append(processed)
+            test_labels.append(self.test_split[i]["label"])
+            if (i + 1) % 500 == 0:
+                print(f"  {i + 1} processed")
+
+        test_texts = torch.stack(test_texts)
+        test_labels = torch.tensor(test_labels, dtype=torch.long)
+
