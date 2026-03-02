@@ -138,3 +138,63 @@ def predict_sentiment(
     probs_array = probs[0].detach().cpu().numpy()
 
     return label, confidence, probs_array
+
+def batch_predict_sentiment(
+    texts: list,
+    model: nn.Module,
+    vocab: Vocabulary,
+    device: torch.device,
+    max_length: int = 128,
+    batch_size: int = 32,
+) -> Tuple[list, np.ndarray, np.ndarray]:
+    """Predict sentiment for multiple texts."""
+    model.eval()
+
+    all_labels = []
+    all_confidences = []
+    all_probs = []
+
+    for i in range(0, len(texts), batch_size):
+        batch_texts = texts[i : i + batch_size]
+
+        processed_texts = []
+        for text in batch_texts:
+            processed_text = process_text(
+                text, vocab, max_length, pad_idx=vocab.pad_idx
+            )
+            processed_texts.append(processed_text)
+
+        batch_tensor = torch.stack(processed_texts).to(device)
+
+        with torch.no_grad():
+            outputs = model(batch_tensor)
+            probs = torch.softmax(outputs, dim=1)
+            predictions = torch.argmax(probs, dim=1)
+
+        for j, pred in enumerate(predictions):
+            label = "Positive" if pred.item() == 1 else "Negative"
+            confidence = probs[j, pred].item()
+            all_labels.append(label)
+            all_confidences.append(confidence)
+            all_probs.append(probs[j].detach().cpu().numpy())
+
+    return (
+        all_labels,
+        np.array(all_confidences),
+        np.array(all_probs),
+    )
+
+
+# Utility functions
+def save_model(model: nn.Module, filepath: str) -> None:
+    """Save model state to file."""
+    torch.save(model.state_dict(), filepath)
+    print(f"Model saved to '{filepath}'")
+
+
+def load_model(model: nn.Module, filepath: str, device: torch.device) -> nn.Module:
+    """Load model state from file."""
+    model.load_state_dict(torch.load(filepath, map_location=device))
+    model.to(device)
+    print(f"Model loaded from '{filepath}'")
+    return model
