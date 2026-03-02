@@ -53,3 +53,20 @@ class Vocabulary:
     def decode(self, indices: List[int]) -> List[str]:
         """Decode indices to tokens"""
         return [self.idx_to_token.get(idx, "<unk>") for idx in indices]
+    
+
+def process_text(
+    text: str, vocab: Vocabulary, max_length: int, pad_idx: int = 0
+    ) -> torch.Tensor:
+    """Convert text to padded token tensor"""
+    tokenizer = SmartTokenizer()
+    tokens = tokenizer.tokenize(text)
+    ids = vocab.encode(tokens)
+
+    if len(ids) < max_length:
+        ids = ids + [pad_idx] * (max_length - len(ids))
+    else:
+        ids = ids[:max_length]
+    return torch.tensor(ids, dtype=torch.long)
+
+
