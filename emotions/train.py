@@ -115,3 +115,26 @@ def train_model(
     return train_losses, train_accuracies, test_losses, test_accuracies
 
 
+def predict_sentiment(
+    text: str,
+    model: nn.Module,
+    vocab: Vocabulary,
+    device: torch.device,
+    max_length: int = 128,
+) -> Tuple[str, float, np.ndarray]:
+    """Predict sentiment for input text."""
+    model.eval()
+
+    processed_text = process_text(text, vocab, max_length, pad_idx=vocab.pad_idx)
+    processed_text = processed_text.unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        output = model(processed_text)
+        probs = torch.softmax(output, dim=1)
+        prediction = torch.argmax(probs, dim=1).item()
+
+    label = "Positive" if prediction == 1 else "Negative"
+    confidence = probs[0, prediction].item()
+    probs_array = probs[0].detach().cpu().numpy()
+
+    return label, confidence, probs_array
