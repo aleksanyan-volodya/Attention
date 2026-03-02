@@ -1,6 +1,7 @@
 """Training, evaluation, and inference utilities."""
 
 from typing import Tuple, List
+import pickle
 
 import torch
 import torch.nn as nn
@@ -198,3 +199,17 @@ def load_model(model: nn.Module, filepath: str, device: torch.device) -> nn.Modu
     model.to(device)
     print(f"Model loaded from '{filepath}'")
     return model
+
+def save_vocabulary(vocab: Vocabulary, filepath: str) -> None:
+    """Save vocabulary to pickle file."""
+    with open(filepath, "wb") as f:
+        pickle.dump(vocab, f)
+    print(f"Vocabulary saved to '{filepath}'")
+
+
+def load_vocabulary(filepath: str) -> Vocabulary:
+    """Load vocabulary from pickle file."""
+    with open(filepath, "rb") as f:
+        vocab = pickle.load(f)
+    print(f"Vocabulary loaded from '{filepath}'")
+    return vocab
