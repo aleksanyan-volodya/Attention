@@ -5,7 +5,7 @@ from collections import Counter
 from typing import List, Tuple
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from datasets import load_dataset
 
 
@@ -148,4 +148,21 @@ class IMDBDataLoader:
 
         test_texts = torch.stack(test_texts)
         test_labels = torch.tensor(test_labels, dtype=torch.long)
+
+        train_loader = DataLoader(
+            TensorDataset(train_texts, train_labels),
+            batch_size=batch_size,
+            shuffle=True,
+        )
+
+        test_loader = DataLoader(
+            TensorDataset(test_texts, test_labels),
+            batch_size=batch_size,
+            shuffle=False,
+        )
+
+        print(f"DataLoaders succefully created!")
+        print(f"Train: {len(train_loader)}, Test: {len(test_loader)}")
+        
+        return train_loader, test_loader
 
