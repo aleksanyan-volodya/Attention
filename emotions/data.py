@@ -100,3 +100,24 @@ class IMDBDataLoader:
         self.vocab.build_from_samples(samples, max_vocab_size)
         print(f"Vocabulary size: {self.vocab.vocab_size}")
         return self.vocab
+    
+    def process_and_create_loaders(self, max_seq_length: int,train_samples: int = 5000,test_samples: int = 2000,
+    ) -> Tuple[DataLoader, DataLoader]:
+        """Process data and create DataLoaders."""
+
+        print(f"Processing {train_samples} training samples...")
+
+        train_texts = [] 
+        train_labels = []
+
+        for i in range(train_samples):
+            processed = process_text(
+                self.train_split[i]["text"],
+                self.vocab,
+                max_seq_length,
+                self.vocab.pad_idx,
+            )
+            train_texts.append(processed)
+            train_labels.append(self.train_split[i]["label"])
+            if (i + 1) % 1000 == 0:
+                print(f"  {i + 1} processed")
