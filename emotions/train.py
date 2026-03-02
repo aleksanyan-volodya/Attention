@@ -47,3 +47,31 @@ def train_epoch(
         correct += (predicted == labels).sum().item()
 
     return total_loss / len(data_loader), correct / total
+
+def evaluate(
+    model: nn.Module,
+    data_loader: DataLoader,
+    criterion: nn.Module,
+    device: torch.device,
+) -> Tuple[float, float]:
+    
+    """Evaluate model on test/val data"""
+    model.eval()
+    total_loss = 0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for texts, labels in tqdm(data_loader, desc="Evaluating"):
+            texts = texts.to(device)
+            labels = labels.to(device)
+
+            outputs = model(texts)
+            loss = criterion(outputs, labels)
+
+            total_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    return total_loss / len(data_loader), correct / total
