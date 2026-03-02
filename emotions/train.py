@@ -15,7 +15,32 @@ import sys
 sys.path.append("..")
 from transformerNew import Transformer
 
+# using HF datasets
+from datasets import load_dataset
+
+
+
+
+def load_split_data(seed=42, dataset_name="imdb"):
+	dataset = load_dataset(dataset_name)
+
+	train = dataset["train"].shuffle(seed)
+	test = dataset["test"].shuffle(seed)
+
+	print("Dataset succefully loaded")
+
+	print(f"Train samples: {len(train)}")
+	print(f"Test samples: {len(test)}")
+
+	return train, test
+
+
+def main():
+	train, test = load_split_data()
+
+
 
 if __name__ == '__main__':
 	print(f"GPU available: {torch.cuda.is_available()}")
+	main()
 	print("end :)")
