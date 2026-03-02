@@ -70,3 +70,11 @@ def process_text(
     return torch.tensor(ids, dtype=torch.long)
 
 
+class IMDBDataLoader:
+    """Load and preprocess IMDB dataset speciffically for sentiment analysis"""
+
+    def __init__(self):
+        self.train_split = None
+        self.test_split = None
+        self.vocab = None
+
