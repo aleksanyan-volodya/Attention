@@ -52,14 +52,16 @@ class MultiHeadAttention(nn.Module):
         attn_output = self.scaled_dot_product_attention(Q, K, V, mask)
         return self.W_o(self.combine_heads(attn_output))
 
-class PositionWiseFeedForward(nn.Module):#la je ne sait pas ce que c'est j'ai pas trop d'idée
+
+class PositionWiseFeedForward(nn.Module):
+    """Position-wise feed-forward network"""
     def __init__(self, d_model: int, d_ff: int):
-        super(PositionWiseFeedForward, self).__init__()
+        super().__init__()
         self.fc1 = nn.Linear(d_model, d_ff)
         self.fc2 = nn.Linear(d_ff, d_model)
         self.relu = nn.ReLU()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.fc2(self.relu(self.fc1(x)))
 
 
