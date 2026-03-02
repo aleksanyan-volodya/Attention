@@ -75,3 +75,43 @@ def evaluate(
             correct += (predicted == labels).sum().item()
 
     return total_loss / len(data_loader), correct / total
+
+def train_model(
+    model: nn.Module,
+    train_loader: DataLoader,
+    test_loader: DataLoader,
+    criterion: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
+    num_epochs: int,
+) -> Tuple[List[float], List[float], List[float], List[float]]:
+    """Train model for multiple epochs."""
+    print("Starting training...\n")
+
+    train_losses = []
+    train_accuracies = []
+    test_losses = []
+    test_accuracies = []
+
+    for epoch in range(num_epochs):
+        if epoch % 5 == 0:
+            print(f"Epoch {epoch + 1}/{num_epochs}")
+            print("-" * 50)
+
+        train_loss, train_acc = train_epoch(
+            model, train_loader, criterion, optimizer, device
+        )
+        train_losses.append(train_loss)
+        train_accuracies.append(train_acc)
+
+        test_loss, test_acc = evaluate(model, test_loader, criterion, device)
+        test_losses.append(test_loss)
+        test_accuracies.append(test_acc)
+
+        print(f"Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f}")
+        print(f"Test Loss:  {test_loss:.4f} | Test Accuracy:  {test_acc:.4f}\n")
+
+    print("Training completed")
+    return train_losses, train_accuracies, test_losses, test_accuracies
+
+
