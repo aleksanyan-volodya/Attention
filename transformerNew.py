@@ -103,9 +103,11 @@ class EncoderLayer(nn.Module):
         return self.norm2(x + self.dropout(ff_output))
 
 
-class DecoderLayer(nn.Module):#crée le decodeur.
+class DecoderLayer(nn.Module):
+    """Single layer of the Transformer decoder"""
+
     def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float):
-        super(DecoderLayer, self).__init__()
+        super().__init__()
         self.self_attn = MultiHeadAttention(d_model, num_heads)
         self.cross_attn = MultiHeadAttention(d_model, num_heads)
         self.feed_forward = PositionWiseFeedForward(d_model, d_ff)
@@ -114,24 +116,15 @@ class DecoderLayer(nn.Module):#crée le decodeur.
         self.norm3 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, x, enc_output, src_mask, tgt_mask):#passage dans les modulkes d'attentions.
+    def forward(
+            self, x: torch.Tensor, enc_output: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor
+            ) -> torch.Tensor:
         attn_output = self.self_attn(x, x, x, tgt_mask)
         x = self.norm1(x + self.dropout(attn_output))
         attn_output = self.cross_attn(x, enc_output, enc_output, src_mask)
         x = self.norm2(x + self.dropout(attn_output))
         ff_output = self.feed_forward(x)
-        x = self.norm3(x + self.dropout(ff_output))
-        return x
-
-#d_ff = dimension interne dans le feed-forward.
-
-#max_seq_length = longueur maximal de la sequence. En gros la taille de la phrase mais je ne sait pas dans quelle unité la mettre. 
-#Il prevoient de l'initialisé a 100.
-
-#dropout = 	pour evité le sur ajustement  des donnée on l'initialie en 0.1 ou 0.3 ... dans l'article il est initialiser a 0,1.
-#src_vocab_size, tgt_vocab_size   sont initialise a 5000 généralement.
-#dans l'article le nombre de tête dans le multihead attention est a 6 mais dans le code il recomande de le mettre a 8.
-#d model dans l'article il le mettaient a 512
+        return self.norm3(x + self.dropout(ff_output))
 
 
 class Transformer(nn.Module):
