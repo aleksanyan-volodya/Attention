@@ -46,3 +46,10 @@ class Vocabulary:
 
         self.vocab_size = len(self.token_to_idx)
 
+    def encode(self, tokens: List[str]) -> List[int]:
+        """Encode tokens to indices"""
+        return [self.token_to_idx.get(token, self.unk_idx) for token in tokens]
+
+    def decode(self, indices: List[int]) -> List[str]:
+        """Decode indices to tokens"""
+        return [self.idx_to_token.get(idx, "<unk>") for idx in indices]
