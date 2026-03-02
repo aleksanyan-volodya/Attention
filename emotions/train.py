@@ -18,7 +18,8 @@ from transformerNew import Transformer
 # using HF datasets
 from datasets import load_dataset
 
-
+#HYPERPARAM
+VOCAB_SIZE = 20000
 
 
 def load_split_data(seed=42, dataset_name="imdb"):
@@ -28,11 +29,36 @@ def load_split_data(seed=42, dataset_name="imdb"):
 	test = dataset["test"].shuffle(seed)
 
 	print("Dataset succefully loaded")
-
 	print(f"Train samples: {len(train)}")
 	print(f"Test samples: {len(test)}")
 
 	return train, test
+
+def tokenizer(text, train):
+	PAD_IDX = 0
+	UNK_IDX = 1
+
+	# using regex tokenizer: words + contractions + numbers
+	def __regex_tokenizer():
+		text = text.lower()
+		return re.findall(r"[a-z]+(?:'[a-z]+)?|\d+", text)
+
+	print("Building vocabulary")
+	word_counter = Counter()
+
+	for i, sample in enumerate(train):
+		if i>= 10000: 	# use subset to build vocab more quickly
+			break
+		tokens = __regex_tokenizer(sample["text"])
+		word_counter.update(tokens)
+
+	most_commun = word_counter.most_commun(VOCAB_SIZE-2)
+	vocab_dict = {"<pad>": PAD_IDX,
+					"unk>": UNK_IDX}
+	for word, _ in most_commun:
+		vocab_dict[word] = len(vocab_dict)
+
+	MODEL_VOCAB_SIZE = len(vocab_dict)
 
 
 def main():
