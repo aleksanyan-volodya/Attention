@@ -20,6 +20,7 @@ from datasets import load_dataset
 
 #HYPERPARAM
 VOCAB_SIZE = 20000
+MAX_SEQ_LENGTH = 128
 
 
 def load_split_data(seed=42, dataset_name="imdb"):
@@ -59,7 +60,22 @@ def tokenizer(text, train):
 		vocab_dict[word] = len(vocab_dict)
 
 	MODEL_VOCAB_SIZE = len(vocab_dict)
+	print(MODEL_VOCAB_SIZE)
 
+	
+	# convert text to tensor of tokens ids
+	tokens = __regex_tokenizer(text)
+	ids = [vocab_dict.get(token, UNK_IDX) for token in tokens]
+
+	if len(ids) < MAX_SEQ_LENGTH:
+		ids = ids + [PAD_IDX] * (MAX_SEQ_LENGTH - len(ids))
+	else:
+		ids = ids[:MAX_SEQ_LENGTH]
+
+	return torch.tensor(ids, dtype=torch.long)
+
+
+	
 
 def main():
 	train, test = load_split_data()
