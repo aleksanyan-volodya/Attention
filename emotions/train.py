@@ -13,5 +13,5 @@ from data import Vocabulary, process_text
 
 import sys 
 sys.path.append("..")
-from ..transformerNew import Transformer
+from transformerNew import Transformer
 
