@@ -78,3 +78,25 @@ class IMDBDataLoader:
         self.test_split = None
         self.vocab = None
 
+    def load_dataset(self, seed: int = 42) -> None:
+        """Load IMDB dataset from HuggingFace datasets library"""
+        print("Loading IMDB dataset...")
+
+        dataset = load_dataset("imdb")
+        self.train_split = dataset["train"].shuffle(seed=seed)
+        self.test_split = dataset["test"].shuffle(seed=seed)
+
+        print(f"Train: {len(self.train_split)}, Test: {len(self.test_split)}")
+
+    def build_vocabulary(self, num_samples: int = 10000, max_vocab_size: int = 20000) -> Vocabulary:
+        """Build vocabulary from training samples."""
+        if self.train_split is None:
+            raise ValueError("Load dataset first with load_dataset()")
+        
+        print(f"Building vocabulary from {num_samples} samples....")
+        samples = [self.train_split[i]["text"] for i in range(num_samples)]
+        
+        self.vocab = Vocabulary()
+        self.vocab.build_from_samples(samples, max_vocab_size)
+        print(f"Vocabulary size: {self.vocab.vocab_size}")
+        return self.vocab
