@@ -149,9 +149,10 @@ class Transformer(nn.Module):
         num_heads: int, 
         num_layers: int, 
         d_ff: int,
-        max_seq_length: int, 
-        dropout: float,
-        pad_token_id: int=0
+        max_seq_length: int=100, 
+        dropout: float=0.1,
+        pad_token_id: int=0,
+        mask: bool=False
     ):
 
         super().__init__()
@@ -168,31 +169,39 @@ class Transformer(nn.Module):
 
         self.fc = nn.Linear(d_model, tgt_vocab_size)
         self.dropout = nn.Dropout(dropout)
+        self.mask = mask
 
     def generate_mask(self, src: torch.Tensor, tgt: torch.Tensor) -> Tuple(torch.Tensor, torch.Tensor):
+        assert src.size(0) == tgt.size(0)  # Ensure batch sizes match
+        assert self.mask, "Masking is disabled. Set mask=True in the constructor to enable"
+        
         src_mask = (src != 0).unsqueeze(1).unsqueeze(2)
         tgt_mask = (tgt != 0).unsqueeze(1).unsqueeze(3)
         seq_length = tgt.size(1)
         nopeak_mask = (1 - torch.triu(torch.ones(1, seq_length, seq_length), diagonal=1)).bool()
         tgt_mask = tgt_mask & nopeak_mask
+
         return src_mask, tgt_mask
 
     def forward(self, src: torch.Tensor, tgt: torch.Tensor) -> torch.Tensor:
-        src_mask, tgt_mask = self.generate_mask(src, tgt)#on peu ne pas le mettre dans notre code le car on a pas besoin de masuqer les chose dans les sequences.
+        #on peu ne pas le mettre dans notre code le car on a pas besoin de masuqer les chose dans les sequences.
+        enc_output = self.dropout(self.positional_encoding(self.encoder_embedding(src)))
+        dec_output = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
+
+        if self.mask:
+            src_mask, tgt_mask = self.generate_mask(src, tgt)
+            for enc_layer in self.encoder_layers:
+                enc_output = enc_layer(enc_output, src_mask)
+            for dec_layer in self.decoder_layers:
+                dec_output = dec_layer(dec_output, enc_output, src_mask, tgt_mask)
+        else:
+            for enc_layer in self.encoder_layers:
+                enc_output = enc_layer(enc_output)
+            for dec_layer in self.decoder_layers:
+                dec_output = dec_layer(dec_output, enc_output)
         
-        src_embedded = self.dropout(self.positional_encoding(self.encoder_embedding(src)))
-        tgt_embedded = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
-
-        enc_output = src_embedded
-        for enc_layer in self.encoder_layers:
-            enc_output = enc_layer(enc_output, src_mask)
-
-        dec_output = tgt_embedded
-        for dec_layer in self.decoder_layers:
-            dec_output = dec_layer(dec_output, enc_output, src_mask, tgt_mask)
-
-        output = self.fc(dec_output)
-        return output
+        logits = self.fc(dec_output)
+        return logits
 
 
 #quelque initialisation du model transformer a changer pour nos sequences potentielement.
