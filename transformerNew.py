@@ -96,7 +96,7 @@ class EncoderLayer(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         attn_output = self.self_attn(x, x, x, mask)
         x = self.norm1(x + self.dropout(attn_output))
         ff_output = self.feed_forward(x)
@@ -117,7 +117,7 @@ class DecoderLayer(nn.Module):
         self.dropout = nn.Dropout(dropout)
         
     def forward(
-            self, x: torch.Tensor, enc_output: torch.Tensor, src_mask: torch.Tensor, tgt_mask: torch.Tensor
+            self, x: torch.Tensor, enc_output: torch.Tensor, src_mask: Optional[torch.Tensor] = None, tgt_mask: Optional[torch.Tensor] = None
             ) -> torch.Tensor:
         attn_output = self.self_attn(x, x, x, tgt_mask)
         x = self.norm1(x + self.dropout(attn_output))
@@ -125,8 +125,7 @@ class DecoderLayer(nn.Module):
         x = self.norm2(x + self.dropout(attn_output))
         ff_output = self.feed_forward(x)
         return self.norm3(x + self.dropout(ff_output))
-        x = self.norm3(x + self.dropout(ff_output))
-        return x
+
 
 # EXPLICATIONS 
 #d_ff = dimension interne dans le feed-forward.
@@ -183,24 +182,30 @@ class Transformer(nn.Module):
 
         return src_mask, tgt_mask
 
-    def forward(self, src: torch.Tensor, tgt: torch.Tensor) -> torch.Tensor:
+    def forward(self, src: torch.Tensor, tgt: Optional[torch.Tensor] = None) -> torch.Tensor:
         #on peu ne pas le mettre dans notre code le car on a pas besoin de masuqer les chose dans les sequences.
         enc_output = self.dropout(self.positional_encoding(self.encoder_embedding(src)))
-        dec_output = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
-
-        if self.mask:
-            src_mask, tgt_mask = self.generate_mask(src, tgt)
-            for enc_layer in self.encoder_layers:
-                enc_output = enc_layer(enc_output, src_mask)
-            for dec_layer in self.decoder_layers:
-                dec_output = dec_layer(dec_output, enc_output, src_mask, tgt_mask)
-        else:
+        
+        if tgt is None:
             for enc_layer in self.encoder_layers:
                 enc_output = enc_layer(enc_output)
-            for dec_layer in self.decoder_layers:
-                dec_output = dec_layer(dec_output, enc_output)
-        
-        logits = self.fc(dec_output)
+            output = enc_output
+        else:
+            dec_output = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
+            if self.mask:
+                src_mask, tgt_mask = self.generate_mask(src, tgt)
+                for enc_layer in self.encoder_layers:
+                    enc_output = enc_layer(enc_output, src_mask)
+                for dec_layer in self.decoder_layers:
+                    dec_output = dec_layer(dec_output, enc_output, src_mask, tgt_mask)
+            else:
+                for enc_layer in self.encoder_layers:
+                    enc_output = enc_layer(enc_output)
+                for dec_layer in self.decoder_layers:
+                    dec_output = dec_layer(dec_output, enc_output)
+            output = dec_output
+        output = torch.mean(output, dim=1)  # Global average pooling
+        logits = self.fc(output)
         return logits
 
 

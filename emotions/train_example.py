@@ -11,13 +11,15 @@ import sys
 sys.path.append("..")
 from transformerNew import Transformer
 
+print(f"Device used :{DEVICE}\n")
+
 # Load the Data
 data_loader = IMDBDataLoader()
 data_loader.load_dataset(seed=RANDOM_SEED)
 data_loader.build_vocabulary(VOCAB_BUILD_SIZE, VOCAB_SIZE)
 
 train_loader, test_loader = data_loader.process_and_create_loaders(
-    MAX_SEQ_LENGTH, BATCH_SIZE, TRAIN_SUBSET_SIZE, TEST_SUBSET_SIZE
+    MAX_SEQ_LENGTH, BATCH_SIZE, TRAIN_SUBSET_SIZE, TEST_SUBSET_SIZE, verbose=False
 )
 
 # Create model
@@ -33,3 +35,23 @@ model = Transformer(
     pad_token_id=PAD_IDX,
     mask=False
 ).to(DEVICE)
+
+
+total_params = sum(p.numel() for p in model.parameters())
+print(f"Total parameters: {total_params:,}")
+
+# Train
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE) 
+# they are using Adam optim orginally, but maybe other optim could also be ok
+
+
+train_losses, train_accs, test_losses, test_accs = train_model(
+    model=model,
+    train_loader=train_loader,
+    test_loader=test_loader,
+    criterion=criterion,
+    optimizer=optimizer,
+    device=DEVICE,
+    num_epochs=NUM_EPOCHS,
+)
