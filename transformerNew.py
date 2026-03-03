@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from typing import Optional, Tuple
+from typing import Optional
 import math
 
 
@@ -171,7 +171,7 @@ class Transformer(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.mask = mask
 
-    def generate_mask(self, src: torch.Tensor, tgt: torch.Tensor) -> Tuple(torch.Tensor, torch.Tensor):
+    def generate_mask(self, src: torch.Tensor, tgt: torch.Tensor) -> torch.Tensor | torch.Tensor:
         assert src.size(0) == tgt.size(0)  # Ensure batch sizes match
         assert self.mask, "Masking is disabled. Set mask=True in the constructor to enable"
         

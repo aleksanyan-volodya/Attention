@@ -106,7 +106,8 @@ class IMDBDataLoader:
         max_seq_length: int,
         batch_size: int,
         train_samples: int = 5000,
-        test_samples: int = 2000
+        test_samples: int = 2000,
+        verbose: bool = False
     ) -> Tuple[DataLoader, DataLoader]:
         """Process data and create DataLoaders."""
 
@@ -124,7 +125,7 @@ class IMDBDataLoader:
             )
             train_texts.append(processed)
             train_labels.append(self.train_split[i]["label"])
-            if (i + 1) % 1000 == 0:
+            if verbose and (i + 1) % 1000 == 0:
                 print(f"  {i + 1} processed")
 
         train_texts = torch.stack(train_texts)
@@ -143,7 +144,7 @@ class IMDBDataLoader:
             )
             test_texts.append(processed)
             test_labels.append(self.test_split[i]["label"])
-            if (i + 1) % 500 == 0:
+            if verbose and (i + 1) % 500 == 0:
                 print(f"  {i + 1} processed")
 
         test_texts = torch.stack(test_texts)
