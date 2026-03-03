@@ -145,17 +145,18 @@ class Transformer(nn.Module):
         self, 
         src_vocab_size: int, 
         tgt_vocab_size: int, 
-        d_model: int,
-        num_heads: int,
-        num_layers: int,
-        d_ff: int, 
+        d_model: int, 
+        num_heads: int, 
+        num_layers: int, 
+        d_ff: int,
         max_seq_length: int, 
-        dropout: float
+        dropout: float,
+        pad_token_id: int=0
     ):
 
         super().__init__()
-        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model)
-        self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model)
+        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model, padding_idx=pad_token_id)
+        self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model, padding_idx=pad_token_id)
         self.positional_encoding = PositionalEncoding(d_model, max_seq_length)
 
         self.encoder_layers = nn.ModuleList(
@@ -213,6 +214,7 @@ if __name__ == "__main__":
     tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))  #cree les sortie.
 
     criterion = nn.CrossEntropyLoss(ignore_index=0)
+    import torch.optim as optim
     optimizer = optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)
 
     #voir si on peu utiliser des optimiseurs different a chaque fois en faisant baisser le learning rate a chaque fois...
