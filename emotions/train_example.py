@@ -25,7 +25,7 @@ train_loader, test_loader = data_loader.process_and_create_loaders(
 # Create model
 model = Transformer(
     src_vocab_size=data_loader.vocab.vocab_size,
-    tgt_vocab_size=2,  # Binary classification
+    tgt_vocab_size=NUM_CLASSES,  # Binary classification
     d_model=D_MODEL,
     num_heads=NUM_HEADS,
     num_layers=NUM_LAYERS,
