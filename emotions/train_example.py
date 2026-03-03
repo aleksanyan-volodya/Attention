@@ -55,3 +55,9 @@ train_losses, train_accs, test_losses, test_accs = train_model(
     device=DEVICE,
     num_epochs=NUM_EPOCHS,
 )
+
+#Save results
+save_model(model, MODEL_SAVE_PATH)
+plot_training_results(train_losses, train_accs, test_losses, test_accs, RESULTS_PLOT_PATH)
+print(f"\nFinal Test Accuracy: {test_accs[-1]:.4f}")
+

@@ -22,12 +22,12 @@ D_MODEL = 256
 NUM_HEADS = 4
 NUM_LAYERS = 2
 D_FF = 512
-DROPOUT = 0.1
+DROPOUT = 0.15
 NUM_CLASSES = 2  # Binary classification: Negative, Positive
 
 # Training Parameters
 BATCH_SIZE = 32
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 NUM_EPOCHS = 10
 
 # File Paths
