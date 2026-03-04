@@ -1,5 +1,3 @@
-"""Minimal Streamlit app entrypoint."""
-
 import streamlit as st
 
 
@@ -35,8 +33,8 @@ def main() -> None:
     st.set_page_config(page_title="Attention", layout="centered")
     st.title("Attention")
 
-    section = st.sidebar.radio(
-        "Go to section",
+    app_mode = st.sidebar.selectbox(
+        "Choose the app mode",
         (
             "Main Page",
             "Binary Emotion Recognition",
@@ -45,14 +43,15 @@ def main() -> None:
         ),
     )
 
-    if section == "Main Page":
+    if app_mode == "Main Page":
         render_home()
-    elif section == "Binary Emotion Recognition":
+    elif app_mode == "Binary Emotion Recognition":
         render_binary_emotion()
-    elif section == "Multiclass Emotion Prediction":
+    elif app_mode == "Multiclass Emotion Prediction":
         render_multiclass_emotion()
     else:
         render_third_model()
+
 
 
 if __name__ == "__main__":
