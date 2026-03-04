@@ -12,7 +12,40 @@ def render_binary_emotion() -> None:
     """Render the binary emotion recognition section."""
     st.header("Binary Emotion Recognition")
     st.write("Task: negative / positive")
-    st.write("Sorry, coming soon... ://")
+
+    st.markdown(
+        """
+        This section is for **binary sentiment/emotion recognition** on English text.
+        The target model was trained on **IMDb movie reviews** from Hugging Face,
+        and will output one of two labels: **positive** or **negative**.
+        """
+    )
+    st.info("Model integration status: UI is ready, model wiring is coming next.")
+
+    with st.expander("What this section is for"):
+        st.write(
+            "Use this page to test short or long English text snippets and get "
+            "a binary sentiment prediction."
+        )
+        st.write("Expected labels: **positive** / **negative**")
+
+    user_text = st.text_area(
+        "Enter English text",
+        placeholder="Example: I really enjoyed this movie and would watch it again.",
+        height=160,
+    )
+    st.caption(f"Character count: {len(user_text)}")
+
+    if st.button("Predict", type="primary"):
+        if not user_text.strip():
+            st.error("Please enter some text before clicking Predict.")
+            return
+
+        st.subheader("Prediction")
+        st.warning("Sorry, coming soon... ://")
+        st.caption(
+            "Once the model is connected, this will return either 'positive' or 'negative'."
+        )
 
 
 def render_multiclass_emotion() -> None:
