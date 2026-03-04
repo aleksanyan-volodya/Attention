@@ -1,5 +1,39 @@
 import streamlit as st
+import torch
+import sys
 
+# Add emotions module to path
+sys.path.append("emotions")
+from emotions.config import *
+
+sys.path.append(".")
+from transformerNew import Transformer
+from emotions.train import predict_sentiment, load_model, load_vocabulary
+
+
+@st.cache_resource
+def load_binary_model():
+    """Load the binary sentiment model and vocabulary (cached)."""
+    # Initialize transformer architecture
+    model = Transformer(
+        src_vocab_size=VOCAB_SIZE,
+        tgt_vocab_size=NUM_CLASSES,
+        d_model=D_MODEL,
+        num_heads=NUM_HEADS,
+        num_layers=NUM_LAYERS,
+        d_ff=D_FF,
+        max_seq_length=MAX_SEQ_LENGTH,
+        dropout=DROPOUT,
+        pad_token_id=PAD_IDX,
+        mask=False,
+        encoder_only=True,
+    ).to(DEVICE)
+
+    # Load trained weights
+    model = load_model(model, f"emotions/{MODEL_SAVE_PATH}", DEVICE)
+    vocab = load_vocabulary(f"emotions/{VOCAB_SAVE_PATH}")
+
+    return model, vocab
 
 def render_home() -> None:
     """Render the main page."""
@@ -20,7 +54,6 @@ def render_binary_emotion() -> None:
         and will output one of two labels: **positive** or **negative**.
         """
     )
-    st.info("Model integration status: UI is ready, model wiring is coming next.")
 
     with st.expander("What this section is for"):
         st.write(
@@ -41,10 +74,26 @@ def render_binary_emotion() -> None:
             st.error("Please enter some text before clicking Predict.")
             return
 
+        # Load model and vocabulary (cached)
+        with st.spinner("Loading model..."):
+            model, vocab = load_binary_model()
+
+        # Run prediction
+        with st.spinner("Analyzing text..."):
+            label, confidence, probs = predict_sentiment(
+                user_text, model, vocab, DEVICE
+            )
+
+        # Display results
         st.subheader("Prediction")
-        st.warning("Sorry, coming soon... ://")
+        if label == "Positive":
+            st.success(f"**{label}** (confidence: {confidence:.1%})")
+        else:
+            st.error(f"**{label}** (confidence: {confidence:.1%})")
+
+        # Show probability breakdown
         st.caption(
-            "Once the model is connected, this will return either 'positive' or 'negative'."
+            f"Probabilities: Negative {probs[0]:.1%} | Positive {probs[1]:.1%}"
         )
 
 
