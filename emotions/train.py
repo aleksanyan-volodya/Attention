@@ -126,7 +126,13 @@ def predict_sentiment(
     """Predict sentiment for input text."""
     model.eval()
 
-    processed_text = process_text(text, vocab, max_length, pad_idx=vocab.pad_idx)
+    # Handle both Vocabulary object and dict
+    if isinstance(vocab, dict):
+        pad_idx = vocab.get("<pad>", 0)
+    else:
+        pad_idx = vocab.pad_idx
+    
+    processed_text = process_text(text, vocab, max_length, pad_idx=pad_idx)
     processed_text = processed_text.unsqueeze(0).to(device)
 
     with torch.no_grad():
@@ -151,6 +157,12 @@ def batch_predict_sentiment(
     """Predict sentiment for multiple texts."""
     model.eval()
 
+    # Handle both Vocabulary object and dict
+    if isinstance(vocab, dict):
+        pad_idx = vocab.get("<pad>", 0)
+    else:
+        pad_idx = vocab.pad_idx
+
     all_labels = []
     all_confidences = []
     all_probs = []
@@ -161,7 +173,7 @@ def batch_predict_sentiment(
         processed_texts = []
         for text in batch_texts:
             processed_text = process_text(
-                text, vocab, max_length, pad_idx=vocab.pad_idx
+                text, vocab, max_length, pad_idx=pad_idx
             )
             processed_texts.append(processed_text)
 

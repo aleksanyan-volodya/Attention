@@ -151,20 +151,31 @@ class Transformer(nn.Module):
         max_seq_length: int=100, 
         dropout: float=0.1,
         pad_token_id: int=0,
-        mask: bool=False
+        mask: bool=False,
+        encoder_only: bool=False
     ):
 
         super().__init__()
-        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model, padding_idx=pad_token_id)
-        self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model, padding_idx=pad_token_id)
+        self.encoder_only = encoder_only
+        
+        if encoder_only:
+            # Single embedding for encoder-only mode (classification tasks)
+            self.embedding = nn.Embedding(src_vocab_size, d_model, padding_idx=pad_token_id)
+        else:
+            # Separate embeddings for encoder-decoder mode
+            self.encoder_embedding = nn.Embedding(src_vocab_size, d_model, padding_idx=pad_token_id)
+            self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model, padding_idx=pad_token_id)
+        
         self.positional_encoding = PositionalEncoding(d_model, max_seq_length)
 
         self.encoder_layers = nn.ModuleList(
             [EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
         )
-        self.decoder_layers = nn.ModuleList(
-            [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
-        )
+        
+        if not encoder_only:
+            self.decoder_layers = nn.ModuleList(
+                [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
+            )
 
         self.fc = nn.Linear(d_model, tgt_vocab_size)
         self.dropout = nn.Dropout(dropout)
@@ -183,27 +194,35 @@ class Transformer(nn.Module):
         return src_mask, tgt_mask
 
     def forward(self, src: torch.Tensor, tgt: Optional[torch.Tensor] = None) -> torch.Tensor:
-        #on peu ne pas le mettre dans notre code le car on a pas besoin de masuqer les chose dans les sequences.
-        enc_output = self.dropout(self.positional_encoding(self.encoder_embedding(src)))
-        
-        if tgt is None:
+        # Encoder-only mode (for classification)
+        if self.encoder_only:
+            enc_output = self.dropout(self.positional_encoding(self.embedding(src)))
             for enc_layer in self.encoder_layers:
                 enc_output = enc_layer(enc_output)
             output = enc_output
         else:
-            dec_output = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
-            if self.mask:
-                src_mask, tgt_mask = self.generate_mask(src, tgt)
-                for enc_layer in self.encoder_layers:
-                    enc_output = enc_layer(enc_output, src_mask)
-                for dec_layer in self.decoder_layers:
-                    dec_output = dec_layer(dec_output, enc_output, src_mask, tgt_mask)
-            else:
+            # Encoder-decoder mode
+            enc_output = self.dropout(self.positional_encoding(self.encoder_embedding(src)))
+            
+            if tgt is None:
                 for enc_layer in self.encoder_layers:
                     enc_output = enc_layer(enc_output)
-                for dec_layer in self.decoder_layers:
-                    dec_output = dec_layer(dec_output, enc_output)
-            output = dec_output
+                output = enc_output
+            else:
+                dec_output = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
+                if self.mask:
+                    src_mask, tgt_mask = self.generate_mask(src, tgt)
+                    for enc_layer in self.encoder_layers:
+                        enc_output = enc_layer(enc_output, src_mask)
+                    for dec_layer in self.decoder_layers:
+                        dec_output = dec_layer(dec_output, enc_output, src_mask, tgt_mask)
+                else:
+                    for enc_layer in self.encoder_layers:
+                        enc_output = enc_layer(enc_output)
+                    for dec_layer in self.decoder_layers:
+                        dec_output = dec_layer(dec_output, enc_output)
+                output = dec_output
+        
         output = torch.mean(output, dim=1)  # Global average pooling
         logits = self.fc(output)
         return logits

@@ -6,7 +6,7 @@ from config import *
 import sys
 sys.path.append("..")
 from transformerNew import Transformer
-from emotions.train import predict_sentiment, batch_predict_sentiment, load_model, load_vocabulary
+from train import predict_sentiment, batch_predict_sentiment, load_model, load_vocabulary
 
 # Load model and vocabulary
 print("Loading model and vocabulary...")
@@ -20,8 +20,9 @@ model = Transformer(
     max_seq_length=MAX_SEQ_LENGTH,
     dropout=DROPOUT,
     pad_token_id=PAD_IDX,
-    mask=False
-).to(DEVICE)
+    mask=False,
+    encoder_only=True
+).to(DEVICE)   
 
 model = load_model(model, MODEL_SAVE_PATH, DEVICE)
 vocab = load_vocabulary(VOCAB_SAVE_PATH)

@@ -6,7 +6,7 @@ import torch.optim as optim
 
 from config import *
 from data import IMDBDataLoader
-from train import train_model, save_model, plot_training_results
+from train import train_model, save_model, save_vocabulary, plot_training_results
 import sys
 sys.path.append("..")
 from transformerNew import Transformer
@@ -33,7 +33,8 @@ model = Transformer(
     max_seq_length=MAX_SEQ_LENGTH,
     dropout=DROPOUT,
     pad_token_id=PAD_IDX,
-    mask=False
+    mask=False,
+    encoder_only=True
 ).to(DEVICE)
 
 
@@ -58,6 +59,7 @@ train_losses, train_accs, test_losses, test_accs = train_model(
 
 #Save results
 save_model(model, MODEL_SAVE_PATH)
+save_vocabulary(data_loader.vocab, VOCAB_SAVE_PATH)
 plot_training_results(train_losses, train_accs, test_losses, test_accs, RESULTS_PLOT_PATH)
 print(f"\nFinal Test Accuracy: {test_accs[-1]:.4f}")
 

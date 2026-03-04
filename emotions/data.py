@@ -61,7 +61,13 @@ def process_text(
     """Convert text to padded token tensor"""
     tokenizer = SmartTokenizer()
     tokens = tokenizer.tokenize(text)
-    ids = vocab.encode(tokens)
+    
+    # Handle both Vocabulary object and dict
+    if isinstance(vocab, dict):
+        unk_idx = vocab.get("<unk>", 1)
+        ids = [vocab.get(token, unk_idx) for token in tokens]
+    else:
+        ids = vocab.encode(tokens)
 
     if len(ids) < max_length:
         ids = ids + [pad_idx] * (max_length - len(ids))
