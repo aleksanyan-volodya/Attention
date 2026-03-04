@@ -229,7 +229,7 @@ def plot_training_results(
     axes[0].plot(test_losses, label="Test Loss", marker="s")
     axes[0].set_xlabel("Epoch")
     axes[0].set_ylabel("Loss")
-    axes[0].set_title("Loss")
+    axes[0].set_title("Training and Test Loss")
     axes[0].legend()
     axes[0].grid(True)
 
@@ -237,7 +237,7 @@ def plot_training_results(
     axes[1].plot(test_accuracies, label="Test Accuracy", marker="s")
     axes[1].set_xlabel("Epoch")
     axes[1].set_ylabel("Accuracy")
-    axes[1].set_title("Accuracy")
+    axes[1].set_title("Training and Test Accuracy")
     axes[1].legend()
     axes[1].grid(True)
 
