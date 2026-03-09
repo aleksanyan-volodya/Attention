@@ -18,7 +18,15 @@ class SmartTokenizer:
         return re.findall(r"[a-z]+(?:'[a-z]+)?|\d+", text)
 
 class Vocabulary:
-    """Vocabulary mapping tokens to indices."""
+    """Mapping between tokens (strings) and indices (integers).
+
+    Parameters
+    ----------
+    pad_idx : int
+        Index reserved for the padding token <pad>.
+    unk_idx : int
+        Index reserved for unknown tokens <unk>.
+    """
 
     def __init__(self, pad_idx: int = 0, unk_idx: int = 1):
         self.pad_idx = pad_idx
@@ -31,7 +39,15 @@ class Vocabulary:
 
 
     def build_from_samples(self, samples: List[str], max_vocab_size: int = 20000) -> None:
-        """Build vocabulary from text samples."""
+        """Build vocabulary from a list of raw text samples.
+
+        Parameters
+        ----------
+        samples : List[str]
+            Raw text samples (training set or a subset of it).
+        max_vocab_size : int
+            Maximum number of tokens to keep (most frequent ones).
+        """
         tokenizer = SmartTokenizer()
         word_cnt = Counter()
 
@@ -47,18 +63,35 @@ class Vocabulary:
         self.vocab_size = len(self.token_to_idx)
 
     def encode(self, tokens: List[str]) -> List[int]:
-        """Encode tokens to indices"""
+        """Convert a list of token strings to a list of indices."""
         return [self.token_to_idx.get(token, self.unk_idx) for token in tokens]
 
     def decode(self, indices: List[int]) -> List[str]:
-        """Decode indices to tokens"""
+        """Convert a list of indices back to token strings."""
         return [self.idx_to_token.get(idx, "<unk>") for idx in indices]
     
 
 def process_text(
     text: str, vocab: Vocabulary, max_length: int, pad_idx: int = 0
     ) -> torch.Tensor:
-    """Convert text to padded token tensor"""
+    """Tokenize, encode and pad/truncate a single text to a fixed length.
+
+    Parameters
+    ----------
+    text : str
+        Raw input text.
+    vocab : Vocabulary
+        Vocabulary used for encoding tokens.
+    max_length : int
+        Target sequence length after padding / truncation.
+    pad_idx : int
+        Index to use for padding.
+
+    Returns
+    -------
+    torch.Tensor
+        1-D LongTensor of shape (max_length,).
+    """
     tokenizer = SmartTokenizer()
     tokens = tokenizer.tokenize(text)
     
