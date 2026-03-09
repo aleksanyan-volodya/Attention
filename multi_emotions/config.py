@@ -1,5 +1,9 @@
 """
-Configuration and hyperparameters for the IMDB Negatif/Positif review model.
+Hyperparameters and configuration for the multi-emotion recognition model.
+
+Most architecture settings carry over from the binary sentiment model in
+`emotions/config.py`. The main unknowns that depend on the dataset are
+marked with TODO comments.
 """
 
 import torch
@@ -15,8 +19,10 @@ PAD_IDX = 0            # Index used for padding tokens
 UNK_IDX = 1            # Index used for unknown tokens
 
 # Subsets of data for faster training/testing
-TRAIN_SUBSET_SIZE = 5000
-TEST_SUBSET_SIZE = 2000
+# TODO: set these once dataset is chosen and its size is known
+TRAIN_SUBSET_SIZE = None
+TEST_SUBSET_SIZE = None
+# TODO: adjust once dataset size is known
 VOCAB_BUILD_SIZE = 10000
 
 # Model Architecture Parameters
@@ -25,7 +31,13 @@ NUM_HEADS = 8     # Number of attention heads (D_MODEL must be divisible by this
 NUM_LAYERS = 3    # Number of transformer encoder layers
 D_FF = 512        # Feed-forward inner dimension inside each encoder layer
 DROPOUT = 0.4     # Dropout rate (regularization)
-NUM_CLASSES = 2  # Binary classification: Negative, Positive
+# TODO: set this once the dataset is chosen.
+NUM_CLASSES = None  # MUST be set before building the model
+
+# TODO: need tp fill this in once the dataset label mapping is known.
+# Example :
+#   EMOTION_LABELS = ["anger", "disgust", "fear", "joy", "sadness", "surprise"]
+EMOTION_LABELS = None  # List[str], length must equal NUM_CLASSES !
 
 # Training Parameters
 BATCH_SIZE = 32
@@ -33,6 +45,6 @@ LEARNING_RATE = 0.00005
 NUM_EPOCHS = 40
 
 # File Paths
-MODEL_SAVE_PATH = "transformer_imdb_classifier.pt"
+MODEL_SAVE_PATH = "multi_emotion_classifier.pt"
 RESULTS_PLOT_PATH = "training_results.png"
 VOCAB_SAVE_PATH = "vocabulary.pkl"
