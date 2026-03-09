@@ -5,6 +5,11 @@ SmartTokenizer, Vocabulary, and process_text are identical to those in
 `emotions/data.py`, they are text utilities with no dependency on
 the specific dataset or number of classes.
 
+The dataset-specific part is isolated in MultiEmotionDataLoader.
+That class is a placeholder: its internal logic (which HuggingFace dataset
+to load, how labels are encoded, whether it is multi-class or multi-label)
+will be filled in once the dataset is decided.
+
 NOTE :
     Multi-class vs multi-label
     ---
@@ -127,3 +132,28 @@ def process_text(
     else:
         ids = ids[:max_length]
     return torch.tensor(ids, dtype=torch.long)
+
+
+# TODO complete once dataset is chosen
+class MultiEmotionDataLoader:
+    """Load and preprocess a multi-emotion text dataset.
+
+    This class is intentionally left as a skeleton. The exact implementation
+    (which dataset to load, how to read labels, train/test split names, etc.)
+    depends on the dataset that will be chosen.
+
+    Once a dataset is chosen, need to implement:
+        1. load_dataset()     -> fill self.train_split and self.test_split
+        2. build_vocabulary() -> same as in `emotions/data.py`
+        3. process_and_create_loaders() -> encode texts, create DataLoaders
+
+    For multi-label datasets, labels should be float tensors of shape
+    (num_samples, NUM_CLASSES) and the loss function must be BCEWithLogitsLoss.
+    For multi-class datasets (one label per sample), labels stay as LongTensors
+    and the loss is CrossEntropyLoss which is same as the binary model
+    """
+
+    def __init__(self):
+        self.train_split = None
+        self.test_split = None
+        self.vocab = None
