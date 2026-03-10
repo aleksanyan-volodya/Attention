@@ -6,7 +6,12 @@ import torch.optim as optim
 
 from config import *
 from data import IMDBDataLoader
-from train import train_model, save_model, save_vocabulary, plot_training_results
+from train import (
+    train_model, 
+    save_model,
+    save_vocabulary,
+    plot_training_results
+)
 import sys
 sys.path.append("..")
 from transformerNew import Transformer
