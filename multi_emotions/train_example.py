@@ -48,3 +48,21 @@ train_loader, test_loader = data_loader.process_and_create_loaders(
     verbose=False,
 )
 
+# Create model
+# tgt_vocab_size is set to NUM_CLASSES so the output layer has N outputs.
+model = Transformer(
+    src_vocab_size=data_loader.vocab.vocab_size,
+    tgt_vocab_size=NUM_CLASSES,
+    d_model=D_MODEL,
+    num_heads=NUM_HEADS,
+    num_layers=NUM_LAYERS,
+    d_ff=D_FF,
+    max_seq_length=MAX_SEQ_LENGTH,
+    dropout=DROPOUT,
+    pad_token_id=PAD_IDX,
+    mask=False,
+    encoder_only=True,
+).to(DEVICE)
+
+total_params = sum(p.numel() for p in model.parameters())
+print(f"Total parameters: {total_params:,}\n")
