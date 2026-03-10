@@ -222,3 +222,49 @@ def train_model(
 
     print("Training completed.")
     return train_losses, train_accuracies, test_losses, test_accuracies
+
+
+def predict_emotion(
+    text: str,
+    model: nn.Module,
+    vocab: Vocabulary,
+    device: torch.device,
+    emotion_labels: List[str],
+    max_length: int = 256,
+) -> Tuple[str, float, np.ndarray]:
+    """Predict the dominant emotion for a single input text.
+
+    Parameters
+    ----------
+    text : str
+        Raw input text from the user.
+    model : nn.Module
+        Trained transformer classifier.
+    vocab : Vocabulary
+        Vocabulary used during training.
+    device : torch.device
+        CPU or CUDA.
+    emotion_labels : List[str]
+        Human-readable emotion names in class-index order.
+    max_length : int
+        Sequence length used during training (must match MAX_SEQ_LENGTH).
+
+    Returns
+    -------
+    Tuple[str, float, np.ndarray]
+        (predicted_emotion, confidence, all_class_probabilities)
+    """
+    model.eval()
+    processed = process_text(text, vocab, max_length, pad_idx=vocab.pad_idx)
+    processed = processed.unsqueeze(0).to(device)  # Shape: (1, max_length)
+
+    with torch.no_grad():
+        output = model(processed)
+        probs = torch.softmax(output, dim=1)
+        prediction = torch.argmax(probs, dim=1).item()
+
+    emotion = emotion_labels[prediction]
+    confidence = probs[0, prediction].item()
+    probs_array = probs[0].detach().cpu().numpy()
+
+    return emotion, confidence, probs_array

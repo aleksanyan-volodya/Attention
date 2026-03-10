@@ -183,7 +183,26 @@ def predict_sentiment(
     device: torch.device,
     max_length: int = 128,
 ) -> Tuple[str, float, np.ndarray]:
-    """Predict sentiment for input text."""
+    """Predict sentiment for input text.
+
+    Parameters
+    ----------
+    text : str
+        Raw input text from the user.
+    model : nn.Module
+        Trained transformer classifier.
+    vocab : Vocabulary
+        Vocabulary used during training.
+    device : torch.device
+        CPU or CUDA.
+    max_length : int
+        Sequence length used during training (must match MAX_SEQ_LENGTH).
+
+    Returns
+    -------
+    Tuple[str, float, np.ndarray]
+        (predicted_emotion, confidence, both_class_probabilities)
+"""
     model.eval()
 
     # Handle both Vocabulary object and dict
@@ -193,7 +212,7 @@ def predict_sentiment(
         pad_idx = vocab.pad_idx
     
     processed_text = process_text(text, vocab, max_length, pad_idx=pad_idx)
-    processed_text = processed_text.unsqueeze(0).to(device)
+    processed_text = processed_text.unsqueeze(0).to(device) # Shape: (1, max_length)
 
     with torch.no_grad():
         output = model(processed_text)
