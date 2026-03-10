@@ -10,6 +10,7 @@ from train import predict_sentiment, batch_predict_sentiment, load_model, load_v
 
 # Load model and vocabulary
 print("Loading model and vocabulary...")
+
 model = Transformer(
     src_vocab_size=VOCAB_SIZE,
     tgt_vocab_size=NUM_CLASSES,
