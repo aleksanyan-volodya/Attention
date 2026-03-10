@@ -118,7 +118,13 @@ class IMDBDataLoader:
         self.vocab = None
 
     def load_dataset(self, seed: int = 42) -> None:
-        """Load IMDB dataset from HuggingFace datasets library"""
+        """Load IMDB dataset from HuggingFace datasets library
+        
+        Parameters
+        ----------
+        seed : int
+            Random seed for shuffling the dataset.
+        """
         print("Loading IMDB dataset...")
 
         dataset = load_dataset("imdb")
@@ -128,15 +134,29 @@ class IMDBDataLoader:
         print(f"Train: {len(self.train_split)}, Test: {len(self.test_split)}")
 
     def build_vocabulary(self, num_samples: int = 10000, max_vocab_size: int = 20000) -> Vocabulary:
-        """Build vocabulary from training samples."""
+        """Build vocabulary from training samples.
+        
+        Parameters
+        ----------
+        num_samples : int
+            How many training samples to use for building the vocabulary.
+        max_vocab_size : int
+            Maximum vocabulary size.
+
+        Returns
+        -------
+        Vocabulary
+            The built vocabulary, also stored in self.vocab.
+        """
         if self.train_split is None:
             raise ValueError("Load dataset first with load_dataset()")
         
-        print(f"Building vocabulary from {num_samples} samples....")
+        print(f"Building vocabulary from {num_samples} samples...")
         samples = [self.train_split[i]["text"] for i in range(num_samples)]
         
         self.vocab = Vocabulary()
         self.vocab.build_from_samples(samples, max_vocab_size)
+
         print(f"Vocabulary size: {self.vocab.vocab_size}")
         return self.vocab
     
@@ -148,7 +168,26 @@ class IMDBDataLoader:
         test_samples: int = 2000,
         verbose: bool = False
     ) -> Tuple[DataLoader, DataLoader]:
-        """Process data and create DataLoaders."""
+        """Process data and create DataLoaders.
+
+        Parameters
+        ----------
+        max_seq_length : int
+            Sequence length after padding / truncation.
+        batch_size : int
+            Mini-batch size.
+        train_samples : int
+            Number of training samples to use.
+        test_samples : int
+            Number of test samples to use.
+        verbose : bool
+            Print progress every 1000 samples if True.
+
+        Returns
+        -------
+        Tuple[DataLoader, DataLoader]
+            (train_loader, test_loader)
+        """
 
         print(f"Processing {train_samples} training samples...")
 

@@ -157,3 +157,142 @@ class MultiEmotionDataLoader:
         self.train_split = None
         self.test_split = None
         self.vocab = None
+
+    def load_dataset(self, seed: int = 42) -> None:
+        """Load the dataset from HuggingFace datasets library.
+
+        Parameters
+        ----------
+        seed : int
+            Random seed for shuffling the dataset.
+
+        Notes
+        -----
+        This method should be implemented to load the specific dataset from HuggingFace.
+        """
+        pass
+
+    def build_vocabulary(
+        self,
+        num_samples: int = 10000,
+        max_vocab_size: int = 20000,
+    ) -> Vocabulary:
+        """Build vocabulary from training samples.
+
+        Parameters
+        ----------
+        num_samples : int
+            How many training samples to use for building the vocabulary.
+        max_vocab_size : int
+            Maximum vocabulary size.
+
+        Returns
+        -------
+        Vocabulary
+            The built vocabulary, also stored in self.vocab.
+        """
+        if self.train_split is None:
+            raise ValueError("Load dataset first with load_dataset()")
+
+        print(f"Building vocabulary from {num_samples} samples...")
+
+        # TODO: adjust the field name "text" to match the dataset's column name.
+        samples = [self.train_split[i]["text"] for i in range(num_samples)]
+
+        self.vocab = Vocabulary()
+        self.vocab.build_from_samples(samples, max_vocab_size)
+
+        print(f"Vocabulary size: {self.vocab.vocab_size}")
+        return self.vocab
+
+    def process_and_create_loaders(
+        self,
+        max_seq_length: int,
+        batch_size: int,
+        train_samples: int,
+        test_samples: int,
+        verbose: bool = False,
+    ) -> Tuple[DataLoader, DataLoader]:
+        """Process raw data and return train / test DataLoaders.
+
+        Parameters
+        ----------
+        max_seq_length : int
+            Sequence length after padding / truncation.
+        batch_size : int
+            Mini-batch size.
+        train_samples : int
+            Number of training samples to use.
+        test_samples : int
+            Number of test samples to use.
+        verbose : bool
+            Print progress every 1000 samples if True.
+
+        Returns
+        -------
+        Tuple[DataLoader, DataLoader]
+            (train_loader, test_loader)
+
+        Notes
+        -----
+        TODO: once the dataset is loaded:
+          - Adjust the column names ("text", "label") to the actual dataset fields.
+          - For multi-label datasets, convert labels to float tensors and
+            use BCEWithLogitsLoss instead of CrossEntropyLoss.
+        """
+        if self.vocab is None:
+            raise ValueError("Call build_vocabulary() first.")
+
+        print(f"Processing {train_samples} training samples...")
+        train_texts, train_labels = [], []
+
+        for i in range(train_samples):
+            processed = process_text(
+                self.train_split[i]["text"],   # TODO: check column name
+                self.vocab,
+                max_seq_length,
+                self.vocab.pad_idx,
+            )
+            train_texts.append(processed)
+            train_labels.append(self.train_split[i]["label"])  # TODO: check column name
+            if verbose and (i + 1) % 1000 == 0:
+                print(f"  {i + 1} processed")
+
+        train_texts = torch.stack(train_texts)
+        train_labels = torch.tensor(train_labels, dtype=torch.long)
+        # For multi-label: torch.tensor(train_labels, dtype=torch.float)
+
+        print(f"Processing {test_samples} test samples...")
+        test_texts, test_labels = [], []
+
+        for i in range(test_samples):
+            processed = process_text(
+                self.test_split[i]["text"],   # TODO: check column name
+                self.vocab,
+                max_seq_length,
+                self.vocab.pad_idx,
+            )
+            test_texts.append(processed)
+            test_labels.append(self.test_split[i]["label"])  # TODO: check column name
+            if verbose and (i + 1) % 500 == 0:
+                print(f"  {i + 1} processed")
+
+        test_texts = torch.stack(test_texts)
+        test_labels = torch.tensor(test_labels, dtype=torch.long)
+        # For multi-label: torch.tensor(test_labels, dtype=torch.float)
+
+        train_loader = DataLoader(
+            TensorDataset(train_texts, train_labels),
+            batch_size=batch_size,
+            shuffle=True,
+        )
+        test_loader = DataLoader(
+            TensorDataset(test_texts, test_labels),
+            batch_size=batch_size,
+            shuffle=False,
+        )
+
+        print("DataLoaders successfully created!")
+        print(f"Train: {len(train_loader)}, Test: {len(test_loader)}")
+
+        return train_loader, test_loader
