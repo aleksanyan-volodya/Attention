@@ -411,7 +411,7 @@ def plot_training_results(
     axes[0].set_ylabel("Loss")
     axes[0].set_title("Training and Test Loss")
     axes[0].legend()
-    axes[0.grid(True)]
+    axes[0].grid(True)
 
     axes[1].plot(train_accuracies, label="Train Accuracy", marker="o")
     axes[1].plot(test_accuracies, label="Test Accuracy", marker="s")
