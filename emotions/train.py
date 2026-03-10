@@ -17,7 +17,7 @@ sys.path.append("..")
 from transformerNew import Transformer
 
 
-
+# Training
 def train_epoch(
     model: nn.Module,
     data_loader: DataLoader,
@@ -25,7 +25,26 @@ def train_epoch(
     optimizer: torch.optim.Optimizer,
     device: torch.device,
 ) -> Tuple[float, float]:
-    """Train model for one epoch."""
+    """Run one full pass over the training data.
+
+    Parameters
+    ----------
+    model : nn.Module
+        The transformer classifier.
+    data_loader : DataLoader
+        Training data loader.
+    criterion : nn.Module
+        Loss function (CrossEntropyLoss).
+    optimizer : torch.optim.Optimizer
+        Optimizer (e.g. Adam).
+    device : torch.device
+        CPU or CUDA.
+
+    Returns
+    -------
+    Tuple[float, float]
+        (average_loss, accuracy) for this epoch.
+    """
     model.train()
     total_loss = 0
     correct = 0
@@ -56,7 +75,24 @@ def evaluate(
     device: torch.device,
 ) -> Tuple[float, float]:
     
-    """Evaluate model on test/val data"""
+    """Evaluate model on test/val data
+    
+    Parameters
+    ----------
+    model : nn.Module
+        The transformer classifier.
+    data_loader : DataLoader
+        Validation or test data loader.
+    criterion : nn.Module
+        Loss function.
+    device : torch.device
+        CPU or CUDA.
+
+    Returns
+    -------
+    Tuple[float, float] 
+        (average_loss, accuracy) on the evaluation set
+"""
     model.eval()
     total_loss = 0
     correct = 0
