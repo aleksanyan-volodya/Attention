@@ -34,3 +34,17 @@ assert TEST_SUBSET_SIZE is not None, "Set TEST_SUBSET_SIZE in config.py."
 
 print(f"Device: {DEVICE}")
 print(f"Emotions ({NUM_CLASSES} classes): {EMOTION_LABELS}\n")
+
+# Load the Data
+data_loader = MultiEmotionDataLoader()
+data_loader.load_dataset(seed=RANDOM_SEED)
+data_loader.build_vocabulary(VOCAB_BUILD_SIZE, VOCAB_SIZE)
+
+train_loader, test_loader = data_loader.process_and_create_loaders(
+    MAX_SEQ_LENGTH,
+    BATCH_SIZE,
+    TRAIN_SUBSET_SIZE,
+    TEST_SUBSET_SIZE,
+    verbose=False,
+)
+

@@ -24,7 +24,11 @@ data_loader.load_dataset(seed=RANDOM_SEED)
 data_loader.build_vocabulary(VOCAB_BUILD_SIZE, VOCAB_SIZE)
 
 train_loader, test_loader = data_loader.process_and_create_loaders(
-    MAX_SEQ_LENGTH, BATCH_SIZE, TRAIN_SUBSET_SIZE, TEST_SUBSET_SIZE, verbose=False
+    MAX_SEQ_LENGTH, 
+    BATCH_SIZE,
+    TRAIN_SUBSET_SIZE,
+    TEST_SUBSET_SIZE,
+    verbose=False,
 )
 
 # Create model
