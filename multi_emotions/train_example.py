@@ -66,3 +66,28 @@ model = Transformer(
 
 total_params = sum(p.numel() for p in model.parameters())
 print(f"Total parameters: {total_params:,}\n")
+
+# Training
+# CrossEntropyLoss works for multi-class (one label per sample).
+# If the dataset is multi-label, need to switch to BCEWithLogitsLoss here.
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+
+train_losses, train_accs, test_losses, test_accs = train_model(
+    model=model,
+    train_loader=train_loader,
+    test_loader=test_loader,
+    criterion=criterion,
+    optimizer=optimizer,
+    device=DEVICE,
+    num_epochs=NUM_EPOCHS,
+    emotion_labels=EMOTION_LABELS,  # Enables per-emotion accuracy logging
+)
+
+# Save results
+save_model(model, MODEL_SAVE_PATH)
+save_vocabulary(data_loader.vocab, VOCAB_SAVE_PATH)
+plot_training_results(train_losses, train_accs, test_losses, test_accs, RESULTS_PLOT_PATH)
+
+print(f"\nFinal Test Accuracy: {test_accs[-1]:.4f}")

@@ -66,7 +66,7 @@ train_losses, train_accs, test_losses, test_accs = train_model(
     num_epochs=NUM_EPOCHS,
 )
 
-#Save results
+# Save results
 save_model(model, MODEL_SAVE_PATH)
 save_vocabulary(data_loader.vocab, VOCAB_SAVE_PATH)
 plot_training_results(train_losses, train_accs, test_losses, test_accs, RESULTS_PLOT_PATH)
