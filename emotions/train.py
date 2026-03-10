@@ -226,14 +226,40 @@ def predict_sentiment(
     return label, confidence, probs_array
 
 def batch_predict_sentiment(
-    texts: list,
+    texts: List[str],
     model: nn.Module,
     vocab: Vocabulary,
     device: torch.device,
     max_length: int = 128,
     batch_size: int = 32,
-) -> Tuple[list, np.ndarray, np.ndarray]:
-    """Predict sentiment for multiple texts."""
+) -> Tuple[List[str], np.ndarray, np.ndarray]:
+    """Predict sentiment for multiple texts.
+    
+    Parameters
+    ----------
+    texts : List[str]
+        List of raw input texts.
+    model : nn.Module
+        Trained transformer classifier.
+    vocab : Vocabulary
+        Vocabulary used during training.
+    device : torch.device
+        CPU or CUDA.
+    emotion_labels : List[str]
+        Human-readable emotion names in class-index order.
+    max_length : int
+        Sequence length used during training.
+    batch_size : int
+        How many texts to process at once.
+
+    Returns
+    -------
+    Tuple[List[str], np.ndarray, np.ndarray]
+        (predicted_emotions, confidences, all_class_probabilities)
+        - predicted_emotions : Emotion name strings, one per input
+        - confidences        : 1-D array, confidence for the top prediction.
+        - all_class_probs    : 2-D array of shape (len(texts), 2).
+    """
     model.eval()
 
     # Handle both Vocabulary object and dict
@@ -249,17 +275,12 @@ def batch_predict_sentiment(
     for i in range(0, len(texts), batch_size):
         batch_texts = texts[i : i + batch_size]
 
-        processed_texts = []
-        for text in batch_texts:
-            processed_text = process_text(
-                text, vocab, max_length, pad_idx=pad_idx
-            )
-            processed_texts.append(processed_text)
-
-        batch_tensor = torch.stack(processed_texts).to(device)
+        processed = torch.stack(
+            [process_text(t, vocab, max_length, pad_idx=vocab.pad_idx) for t in batch]
+        ).to(device)
 
         with torch.no_grad():
-            outputs = model(batch_tensor)
+            outputs = model(processed)
             probs = torch.softmax(outputs, dim=1)
             predictions = torch.argmax(probs, dim=1)
 

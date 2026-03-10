@@ -268,3 +268,67 @@ def predict_emotion(
     probs_array = probs[0].detach().cpu().numpy()
 
     return emotion, confidence, probs_array
+
+def batch_predict_emotion(
+    texts: List[str],
+    model: nn.Module,
+    vocab: Vocabulary,
+    device: torch.device,
+    emotion_labels: List[str],
+    max_length: int = 256,
+    batch_size: int = 32,
+) -> Tuple[List[str], np.ndarray, np.ndarray]:
+    """Predict emotions for a list of texts.
+
+    Parameters
+    ----------
+    texts : List[str]
+        List of raw input texts.
+    model : nn.Module
+        Trained transformer classifier.
+    vocab : Vocabulary
+        Vocabulary used during training.
+    device : torch.device
+        CPU or CUDA.
+    emotion_labels : List[str]
+        Human-readable emotion names in class-index order.
+    max_length : int
+        Sequence length used during training.
+    batch_size : int
+        How many texts to process at once.
+
+    Returns
+    -------
+    Tuple[List[str], np.ndarray, np.ndarray]
+        (predicted_emotions, confidences, all_class_probabilities)
+        - predicted_emotions : List of emotion name strings, one per input.
+        - confidences        : 1-D array, confidence for the top prediction.
+        - all_class_probs    : 2-D array of shape (len(texts), NUM_CLASSES).
+    """
+    model.eval()
+    all_emotions, all_confidences, all_probs = [], [], []
+
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+
+        processed = torch.stack(
+            [process_text(t, vocab, max_length, pad_idx=vocab.pad_idx) for t in batch]
+        ).to(device)
+
+        with torch.no_grad():
+            outputs = model(processed)
+            probs = torch.softmax(outputs, dim=1)
+            predictions = torch.argmax(probs, dim=1)
+
+        for j, pred in enumerate(predictions):
+            emotion = emotion_labels[pred.item()]
+            confidence = probs[j, pred].item()
+            all_emotions.append(emotion)
+            all_confidences.append(confidence)
+            all_probs.append(probs[j].detach().cpu().numpy())
+
+    return (
+        all_emotions, 
+        np.array(all_confidences), 
+        np.array(all_probs),
+    )
