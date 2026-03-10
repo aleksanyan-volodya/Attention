@@ -122,7 +122,31 @@ def train_model(
     device: torch.device,
     num_epochs: int,
 ) -> Tuple[List[float], List[float], List[float], List[float]]:
-    """Train model for multiple epochs."""
+    """Train model for multiple epochs.
+
+    Parameters
+    ----------
+    model : nn.Module
+        The transformer classifier.
+    train_loader : DataLoader
+        Training data loader.
+    test_loader : DataLoader
+        Test/validation data loader.
+    criterion : nn.Module
+        Loss function.
+    optimizer : torch.optim.Optimizer
+        Optimizer.
+    device : torch.device
+        CPU or CUDA.
+    num_epochs : int
+        Total number of training epochs.
+
+    Returns
+    -------
+    Tuple[List[float], List[float], List[float], List[float]]
+        (train_losses, train_accuracies, test_losses, test_accuracies)
+    """
+
     print("Starting training...\n")
 
     train_losses = []

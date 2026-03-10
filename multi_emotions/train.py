@@ -149,3 +149,76 @@ def evaluate(
         }
 
     return total_loss / len(data_loader), overall_acc, per_emotion_acc
+
+
+def train_model(
+    model: nn.Module,
+    train_loader: DataLoader,
+    test_loader: DataLoader,
+    criterion: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
+    num_epochs: int,
+    emotion_labels: Optional[List[str]] = None,
+) -> Tuple[List[float], List[float], List[float], List[float]]:
+    """Train for multiple epochs and print progress.
+
+    Parameters
+    ----------
+    model : nn.Module
+        The transformer classifier.
+    train_loader : DataLoader
+        Training data loader.
+    test_loader : DataLoader
+        Test/validation data loader.
+    criterion : nn.Module
+        Loss function.
+    optimizer : torch.optim.Optimizer
+        Optimizer.
+    device : torch.device
+        CPU or CUDA.
+    num_epochs : int
+        Total number of training epochs.
+    emotion_labels : List[str], optional
+        Passed to evaluate() to get per-emotion accuracy each epoch.
+
+    Returns
+    -------
+    Tuple[List[float], List[float], List[float], List[float]]
+        (train_losses, train_accuracies, test_losses, test_accuracies)
+    """
+
+    print("Starting training...\n")
+
+    train_losses, train_accuracies = [], []
+    test_losses, test_accuracies = [], []
+
+    for epoch in range(num_epochs):
+        if epoch % 5 == 0:
+            print(f"Epoch {epoch + 1}/{num_epochs}")
+            print("-" * 50)
+
+        train_loss, train_acc = train_epoch(
+            model, train_loader, criterion, optimizer, device
+        )
+        train_losses.append(train_loss)
+        train_accuracies.append(train_acc)
+
+        test_loss, test_acc, per_emotion = evaluate(
+            model, test_loader, criterion, device, emotion_labels
+        )
+        test_losses.append(test_loss)
+        test_accuracies.append(test_acc)
+
+        print(f"Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f}")
+        print(f"Test  Loss: {test_loss:.4f} | Test  Accuracy: {test_acc:.4f}")
+
+        # Print per-emotion breakdown every 5 epochs to track hard emotions
+        if per_emotion and epoch % 5 == 0:
+            print("  Per-emotion accuracy:")
+            for emotion, acc in per_emotion.items():
+                print(f"    {emotion:<12}: {acc:.4f}")
+        print()
+
+    print("Training completed.")
+    return train_losses, train_accuracies, test_losses, test_accuracies
