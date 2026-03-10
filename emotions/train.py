@@ -347,6 +347,7 @@ def load_vocabulary(filepath: str) -> Vocabulary:
     print(f"Vocabulary loaded from '{filepath}'")
     return vocab
 
+# Visualization
 
 def plot_training_results(
     train_losses: List[float],
@@ -355,7 +356,16 @@ def plot_training_results(
     test_accuracies: List[float],
     save_path=None,
 ) -> None:
-    """Plot training and test metrics."""
+    """Plot training and test metrics.
+        Parameters
+    ----------
+    train_losses : List[float]
+    train_accuracies : List[float]
+    test_losses : List[float]
+    test_accuracies : List[float]
+    save_path : str
+        Where to save the PNG image.
+    """
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
     axes[0].plot(train_losses, label="Train Loss", marker="o")

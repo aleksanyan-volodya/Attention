@@ -382,3 +382,50 @@ def load_vocabulary(filepath: str) -> Vocabulary:
         vocab = pickle.load(f)
     print(f"Vocabulary loaded from {filepath}")
     return vocab
+
+# Visualization
+
+def plot_training_results(
+    train_losses: List[float],
+    train_accuracies: List[float],
+    test_losses: List[float],
+    test_accuracies: List[float],
+    save_path = None,
+) -> None:
+    """Plot loss and accuracy curves and save to file.
+
+    Parameters
+    ----------
+    train_losses : List[float]
+    train_accuracies : List[float]
+    test_losses : List[float]
+    test_accuracies : List[float]
+    save_path : str
+        Where to save the PNG image.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+    axes[0].plot(train_losses, label="Train Loss", marker="o")
+    axes[0].plot(test_losses, label="Test Loss", marker="s")
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("Loss")
+    axes[0].set_title("Training and Test Loss")
+    axes[0].legend()
+    axes[0.grid(True)]
+
+    axes[1].plot(train_accuracies, label="Train Accuracy", marker="o")
+    axes[1].plot(test_accuracies, label="Test Accuracy", marker="s")
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("Accuracy")
+    axes[1].set_title("Training and Test Accuracy")
+    axes[1].legend()
+    axes[1].grid(True)
+
+
+    plt.tight_layout()
+
+    if save_path: 
+        plt.savefig(save_path, dpi=100)
+        print(f"Plots saved to '{save_path}'")
+
+    plt.show()
