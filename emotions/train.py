@@ -273,7 +273,7 @@ def batch_predict_sentiment(
     all_probs = []
 
     for i in range(0, len(texts), batch_size):
-        batch_texts = texts[i : i + batch_size]
+        batch = texts[i : i + batch_size]
 
         processed = torch.stack(
             [process_text(t, vocab, max_length, pad_idx=vocab.pad_idx) for t in batch]

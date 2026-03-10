@@ -19,7 +19,7 @@ from config import *
 import sys
 sys.path.append("..")
 from transformerNew import Transformer
-from train import predict_sentiment, batch_predict_sentiment, load_model, load_vocabulary
+from train import predict_emotion, batch_predict_emotion, load_model, load_vocabulary
 
 # Config must be complete before loading the model
 assert NUM_CLASSES is not None, "Set NUM_CLASSES in config.py."
