@@ -306,7 +306,22 @@ def save_model(model: nn.Module, filepath: str) -> None:
 
 
 def load_model(model: nn.Module, filepath: str, device: torch.device) -> nn.Module:
-    """Load model state from file."""
+    """Load model state from file.
+    
+    Parameters
+    ----------
+    model : nn.Module
+        Model instance with the same architecture as the saved one.
+    filepath : str
+        Path to the saved .pt file
+    device : torch.device
+        Device to map the weights to.
+
+    Returns
+    -------
+    nn.Module
+        The model with loaded weights, in eval mode.
+    """
     model.load_state_dict(torch.load(filepath, map_location=device))
     model.to(device)
     print(f"Model loaded from '{filepath}'")
@@ -320,7 +335,13 @@ def save_vocabulary(vocab: Vocabulary, filepath: str) -> None:
 
 
 def load_vocabulary(filepath: str) -> Vocabulary:
-    """Load vocabulary from pickle file."""
+    """Load vocabulary from pickle file.
+    
+    Returns
+    -------
+    Vocabulary
+        The deserialized vocabulary object
+    """
     with open(filepath, "rb") as f:
         vocab = pickle.load(f)
     print(f"Vocabulary loaded from '{filepath}'")

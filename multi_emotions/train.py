@@ -332,3 +332,53 @@ def batch_predict_emotion(
         np.array(all_confidences), 
         np.array(all_probs),
     )
+
+# Utility functions
+def save_model(model: nn.Module, filepath: str) -> None:
+    """Save model weights to file."""
+    torch.save(model.state_dict(), filepath)
+    print(f"Model saved to {filepath}")
+
+
+def load_model(model: nn.Module, filepath: str, device: torch.device) -> nn.Module:
+    """Load model weights from file.
+
+    Parameters
+    ----------
+    model : nn.Module
+        Model instance with the same architecture as the saved one.
+    filepath : str
+        Path to the saved .pt file.
+    device : torch.device
+        Device to map the weights to.
+
+    Returns
+    -------
+    nn.Module
+        The model with loaded weights, in eval mode.
+    """
+    model.load_state_dict(torch.load(filepath, map_location=device))
+    model.eval()
+    print(f"Model loaded from {filepath}")
+    return model
+
+
+def save_vocabulary(vocab: Vocabulary, filepath: str) -> None:
+    """Save vocabulary to pickle file."""
+    with open(filepath, "wb") as f:
+        pickle.dump(vocab, f)
+    print(f"Vocabulary saved to {filepath}")
+
+
+def load_vocabulary(filepath: str) -> Vocabulary:
+    """Load vocabulary from disk.
+
+    Returns
+    -------
+    Vocabulary
+        The deserialized Vocabulary object.
+    """
+    with open(filepath, "rb") as f:
+        vocab = pickle.load(f)
+    print(f"Vocabulary loaded from {filepath}")
+    return vocab
