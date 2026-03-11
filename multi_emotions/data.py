@@ -33,7 +33,7 @@ from typing import List, Tuple, Optional
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+from datasets import load_dataset
 
 class SmartTokenizer:
     """Regex-based tokenizer."""
@@ -170,7 +170,12 @@ class MultiEmotionDataLoader:
         -----
         This method should be implemented to load the specific dataset from HuggingFace.
         """
-        pass
+        print("Loading GoEmotions dataset...")
+        dataset = load_dataset("go_emotions")
+        self.train_split = dataset["train"]
+        self.test_split = dataset["test"]
+
+        print(f"Train: {len(self.train_split)}, Test: {len(self.test_split)}")
 
     def build_vocabulary(
         self,
