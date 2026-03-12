@@ -8,7 +8,7 @@ from emotions.config import *
 
 sys.path.append(".")
 from transformerNew import Transformer
-from emotions.train import predict_sentiment, load_model, load_vocabulary
+from emotions.train import predict_sentiment, explain_prediction, load_model, load_vocabulary
 
 
 @st.cache_resource
@@ -78,10 +78,16 @@ def render_binary_emotion() -> None:
         with st.spinner("Loading model..."):
             model, vocab = load_binary_model()
 
-        # Run prediction
+        # Run prediction + token importance in one pass
         with st.spinner("Analyzing text..."):
-            label, confidence, probs = predict_sentiment(
-                user_text, model, vocab, DEVICE
+            label, confidence, top_tokens = explain_prediction(
+                user_text, model, vocab, DEVICE,
+                max_length=MAX_SEQ_LENGTH,
+                top_k=5,
+            )
+            # Also get class probabilities for the breakdown line
+            _, _, probs = predict_sentiment(
+                user_text, model, vocab, DEVICE, max_length=MAX_SEQ_LENGTH
             )
 
         # Display results
@@ -95,6 +101,16 @@ def render_binary_emotion() -> None:
         st.caption(
             f"Probabilities: Negative {probs[0]:.1%} | Positive {probs[1]:.1%}"
         )
+
+        # Show which tokens contributed most
+        st.subheader("Most influential tokens")
+        st.caption(
+            "Importance is computed with gradient x input: how much each token "
+            "pulled the model toward this prediction (normalized, 1.0 = most important)."
+        )
+        for token, score in top_tokens:
+            bar = int(score * 20)  # scale to 20-char bar
+            st.text(f"{token:<20} {'█' * bar} {score:.2f}")
 
 
 def render_multiclass_emotion() -> None:
