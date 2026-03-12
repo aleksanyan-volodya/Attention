@@ -6,7 +6,7 @@ from config import *
 import sys
 sys.path.append("..")
 from transformerNew import Transformer
-from train import predict_sentiment, batch_predict_sentiment, load_model, load_vocabulary
+from train import predict_sentiment, batch_predict_sentiment, explain_prediction, load_model, load_vocabulary
 
 # Load model and vocabulary
 print("Loading model and vocabulary...")
@@ -44,4 +44,14 @@ print("\n=== Batch Predictions ===")
 labels, confidences, _ = batch_predict_sentiment(test_reviews, model, vocab, DEVICE)
 for review, label, conf in zip(test_reviews, labels, confidences):
     print(f"{review[:40]:40} -> {label} ({conf:.2%})")
+
+print("\n=== Token Importance (top 5 tokens) ===")
+for review in test_reviews:
+    label, conf, top_tokens = explain_prediction(review, model, vocab, DEVICE, top_k=5)
+    print(f"\nText   : {review[:60]}")
+    print(f"Result : {label} ({conf:.2%})")
+    print(f"Tokens :")
+    for token, score in top_tokens:
+        bar = int(score * 20)
+        print(f"{token:<20} {'█' * bar} {score:.2f}")
 

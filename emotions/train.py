@@ -276,7 +276,7 @@ def batch_predict_sentiment(
         batch = texts[i : i + batch_size]
 
         processed = torch.stack(
-            [process_text(t, vocab, max_length, pad_idx=vocab.pad_idx) for t in batch]
+            [process_text(t, vocab, max_length, pad_idx=pad_idx) for t in batch]
         ).to(device)
 
         with torch.no_grad():
@@ -375,7 +375,12 @@ def explain_prediction(
 
     # Drop padding positions
     non_pad_mask = processed_text != pad_idx_local
-    tokens = vocab.decode(processed_text[non_pad_mask].tolist())
+    indices = processed_text[non_pad_mask].tolist()
+    if isinstance(vocab, dict):
+        idx_to_token = {v: k for k, v in vocab.items()}
+        tokens = [idx_to_token.get(i, "<unk>") for i in indices]
+    else:
+        tokens = vocab.decode(indices)
     scores = importance[non_pad_mask].detach().cpu().numpy()
 
     # Normalize to so scores are easy to read
