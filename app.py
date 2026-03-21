@@ -62,7 +62,50 @@ def render_binary_emotion() -> None:
             "Start with small values (for example 1-5 epochs). "
             "For 0.7 accuracy you need at least 9 epochs "
         )
-        pass
+
+        # Basic settings that are safe to edit for CPU training
+        col1, col2 = st.columns(2)
+        with col1:
+            epochs = st.slider("Epochs", min_value=2, max_value=20, value=5)
+            learning_rate = st.number_input(
+                "Learning rate",
+                min_value=1e-6,
+                max_value=1e-2,
+                value=5e-5,
+                format="%.6f",
+            )
+            batch_size = st.select_slider(
+                "Batch size",
+                options=[8, 16, 32, 64],
+                value=16,
+            )
+            max_seq_length = st.select_slider(
+                "Max sequence length",
+                options=[64, 128, 256, 384],
+                value=128,
+            )
+        with col2:
+            train_samples = st.slider(
+                "Train subset size",
+                min_value=500,
+                max_value=10000,
+                value=3000,
+                step=500,
+            )
+            test_samples = st.slider(
+                "Test subset size",
+                min_value=500,
+                max_value=5000,
+                value=1000,
+                step=500,
+            )
+            vocab_build_size = st.slider(
+                "Vocabulary build samples",
+                min_value=2000,
+                max_value=25000,
+                value=8000,
+                step=1000,
+            )
 
     user_text = st.text_area(
         "Enter English text",
