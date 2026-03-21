@@ -53,6 +53,12 @@ def render_binary_emotion() -> None:
             "Train a new model (CPU-friendly)",
         ),
     )
+    
+    if workflow_mode == "Use pretrained model":
+        model_source = "pretrained"
+    else:
+        #TODO
+        pass
 
     user_text = st.text_area(
         "Enter English text",
