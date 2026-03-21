@@ -106,6 +106,17 @@ def render_binary_emotion() -> None:
                 value=8000,
                 step=1000,
             )
+        
+        # advaced parameters might be changed by the user later on.
+        d_model, num_heads, num_layers = 128, 4, 2
+        d_ff = max(d_model, d_model * num_layers)
+        dropout = 0.2
+
+        if not validate_transformer_dimensions(int(d_model), int(num_heads)):
+            st.error("Invalid model settings: d_model must be divisible by num_heads.")
+
+        elif st.button("Start training", type="secondary"):
+            pass
 
     user_text = st.text_area(
         "Enter English text",
