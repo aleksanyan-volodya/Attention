@@ -31,5 +31,19 @@ def build_pretrained_binary_model() -> Tuple[Transformer, Any]:
 
     return model, vocab
 
+def validate_transfrmer_dimensions(d_model: int, num_heads: int) -> bool:
+    """Check if transformer is has valid dimensions
 
-# test main name
+    Parameters
+    ----------
+    d_model : int
+        Embedding size.
+    num_heads : int
+        Number of attention heads.
+
+    Returns
+    -------
+    bool
+        True if settings are valid.
+    """
+    return d_model % num_heads == 0
