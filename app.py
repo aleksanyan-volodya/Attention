@@ -200,20 +200,28 @@ def render_binary_emotion() -> None:
             st.error("Please enter some text before clicking Predict.")
             return
 
-        # Load model and vocabulary (cached)
-        with st.spinner("Loading model..."):
-            model, vocab = load_binary_model()
+        # Select model source (custom if user trained one in this session).
+        if model_source == "custom":
+            model = st.session_state["custom_binary_model"]
+            vocab = st.session_state["custom_binary_vocab"]
+            predict_max_length = st.session_state.get(
+                "custom_binary_max_seq_len", MAX_SEQ_LENGTH
+            )
+        else:
+            with st.spinner("Loading model..."):
+                model, vocab = load_binary_model()
+            predict_max_length = MAX_SEQ_LENGTH
 
         # Run prediction + token importance in one pass
         with st.spinner("Analyzing text..."):
             label, confidence, top_tokens = explain_prediction(
                 user_text, model, vocab, DEVICE,
-                max_length=MAX_SEQ_LENGTH,
+                max_length=predict_max_length,
                 top_k=5,
             )
             # Also get class probabilities for the breakdown line
             _, _, probs = predict_sentiment(
-                user_text, model, vocab, DEVICE, max_length=MAX_SEQ_LENGTH
+                user_text, model, vocab, DEVICE, max_length=predict_max_length
             )
 
         # Display results
