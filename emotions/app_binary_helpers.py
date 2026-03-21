@@ -47,3 +47,34 @@ def validate_transfrmer_dimensions(d_model: int, num_heads: int) -> bool:
         True if settings are valid.
     """
     return d_model % num_heads == 0
+
+def get_prediction_artifacts(session_state: Any) -> Tuple[Transformer, Any, int]:
+    """Choose model and vocabulary for prediction
+
+    If a custom model is present in streamlit session, then use it
+    Otherwise load the pretrained model
+
+    Parameters
+    ----------
+    session_state : Any
+        Streamlit session_state object
+
+    Returns
+    -------
+    Tuple[Transformer, Any, int]
+        (model, vocabulary, max_seq_length)
+    """
+    has_custom_model = (
+        "custom_binary_model" in session_state
+        and "custom_binary_vocab" in session_state
+    )
+
+    if has_custom_model:
+        model = session_state["custom_binary_model"]
+        vocab = session_state["custom_binary_vocab"]
+        max_len = int(session_state.get("custom_binary_max_seq_len", MAX_SEQ_LENGTH))
+    else:
+        model, vocab = build_pretrained_binary_model()
+        max_len = MAX_SEQ_LENGTH
+    
+    return model, vocab, max_len
