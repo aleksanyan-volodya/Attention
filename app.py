@@ -6,8 +6,12 @@ sys.path.append("emotions")
 from emotions.config import *
 
 sys.path.append(".")
-from emotions.app_binary_helpers import build_pretrained_binary_model, validate_transformer_dimensions, train_custom_binary_model
-from emotions.train import predict_sentiment, explain_prediction, load_model, load_vocabulary
+from emotions.app_binary_helpers import (
+    build_pretrained_binary_model, 
+    validate_transformer_dimensions, 
+    train_custom_binary_model,
+)
+from emotions.train import predict_sentiment, explain_prediction
 
 
 @st.cache_resource
