@@ -57,7 +57,11 @@ def render_binary_emotion() -> None:
     if workflow_mode == "Use pretrained model":
         model_source = "pretrained"
     else:
-        #TODO
+        st.warning(
+            "Training runs on CPU in your setup, so it can be slow"
+            "Start with small values (for example 1-5 epochs). "
+            "For 0.7 accuracy you need at least 9 epochs "
+        )
         pass
 
     user_text = st.text_area(
