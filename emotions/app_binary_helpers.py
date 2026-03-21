@@ -92,6 +92,9 @@ def train_custom_binary_model(
     test_samples: int,
     vocab_build_size: int,
     d_model: int,
+    num_heads: int,
+    num_layers: int,
+    d_ff: int,
     dropout: float,
 ) -> Tuple[Transformer, Any, Dict[str, float]]:
     """Train a binary sentiment model from user parameters
@@ -99,7 +102,7 @@ def train_custom_binary_model(
     Parameters
     ----------
     epochs : int
-        Number of training epoch
+        Number of training epochs
     learning_rate : float
         Learning rate for Adam optimizer
     batch_size : int
@@ -114,8 +117,14 @@ def train_custom_binary_model(
         Number of samples used to build vocabulary
     d_model : int
         Embedding size
+    num_heads : int
+        Number of attention heads
+    num_layers : int
+        Number of encoder layers
+    d_ff : int
+        Feed-forward hidden size
     dropout : float
-        Dropout probability
+        Dropout proba
 
     Returns
     -------
@@ -135,8 +144,19 @@ def train_custom_binary_model(
     )
 
     model = Transformer(
-        ...
+        src_vocab_size=data_loader.vocab.vocab_size,
+        tgt_vocab_size=NUM_CLASSES,
+        d_model=d_model,
+        num_heads=num_heads,
+        num_layers=num_layers,
+        d_ff=d_ff,
+        max_seq_length=max_seq_length,
+        dropout=dropout,
+        pad_token_id=PAD_IDX,
+        mask=False,
+        encoder_only=True,
     ).to(DEVICE)
+    
     crierion = ...
     optimizer = ...
     vocab = ...
