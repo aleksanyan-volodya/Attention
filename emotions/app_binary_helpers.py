@@ -3,7 +3,11 @@ Helper fonctions for binary sentiment workflow in the app
 """
 from typing import Any, Dict, Tuple
 
+import torch.nn as nn
+import torch.optim as optim
+
 from emotions.config import *
+from emotions.data import IMDBDataLoader
 from emotions.train import load_model, load_vocabulary, train_model
 from transformerNew import Transformer
 
@@ -31,8 +35,8 @@ def build_pretrained_binary_model() -> Tuple[Transformer, Any]:
 
     return model, vocab
 
-def validate_transfrmer_dimensions(d_model: int, num_heads: int) -> bool:
-    """Check if transformer is has valid dimensions
+def validate_transformer_dimensions(d_model: int, num_heads: int) -> bool:
+    """Check if transformer has valid dimensions
 
     Parameters
     ----------
@@ -78,3 +82,39 @@ def get_prediction_artifacts(session_state: Any) -> Tuple[Transformer, Any, int]
         max_len = MAX_SEQ_LENGTH
     
     return model, vocab, max_len
+
+def train_custom_binary_model(
+    epochs: int,
+    learning_rate: float,
+    train_samples: int,
+    test_samples: int,
+    vocab_build_size: int,
+    d_model: int,
+    dropout: float,
+) -> Tuple[Transformer, Any, Dict[str, float]]:
+    """Train a binary sentiment model from user parameters
+
+    Parameters
+    ----------
+    epochs : int
+        Number of training epoch
+    learning_rate : float
+        Learning rate for Adam optimizer
+    train_samples : int
+        Number of train samples to use
+    test_samples : int
+        Number of test samples to use
+    vocab_build_size : int
+        Number of samples used to build vocabulary
+    d_model : int
+        Embedding size
+    dropout : float
+        Dropout probability
+
+    Returns
+    -------
+    Tuple[Transformer, Any, Dict[str, float]]
+        Trained model, vocabulary, metrics dictionary.
+    """
+    # TODO
+    return model, vocab, metrics
