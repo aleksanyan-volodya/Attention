@@ -86,6 +86,8 @@ def get_prediction_artifacts(session_state: Any) -> Tuple[Transformer, Any, int]
 def train_custom_binary_model(
     epochs: int,
     learning_rate: float,
+    batch_size: int,
+    max_seq_length: int,
     train_samples: int,
     test_samples: int,
     vocab_build_size: int,
@@ -100,6 +102,10 @@ def train_custom_binary_model(
         Number of training epoch
     learning_rate : float
         Learning rate for Adam optimizer
+    batch_size : int
+        Batch size
+    max_seq_length : int
+        Token sequence length after padding
     train_samples : int
         Number of train samples to use
     test_samples : int
@@ -116,5 +122,23 @@ def train_custom_binary_model(
     Tuple[Transformer, Any, Dict[str, float]]
         Trained model, vocabulary, metrics dictionary.
     """
-    # TODO
+    data_loader = IMDBDataLoader()
+    data_loader.load_dataset(seed=RANDOM_SEED)
+    data_loader.build_vocabulary(num_samples=vocab_build_size, max_vocab_size=VOCAB_SIZE,)
+
+    train_loader, test_loader = data_loader.process_and_create_loaders(
+        max_seq_length=max_seq_length,
+        batch_size=batch_size,
+        train_samples=train_samples,
+        test_samples=test_samples,
+        verbose=False,
+    )
+
+    model = Transformer(
+        ...
+    ).to(DEVICE)
+    crierion = ...
+    optimizer = ...
+    vocab = ...
+    metrics = ...
     return model, vocab, metrics
