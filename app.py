@@ -1,5 +1,4 @@
 import streamlit as st
-import torch
 import sys
 
 # Add emotions module to path
