@@ -134,7 +134,6 @@ def train_custom_binary_model(
     data_loader = IMDBDataLoader()
     data_loader.load_dataset(seed=RANDOM_SEED)
     data_loader.build_vocabulary(num_samples=vocab_build_size, max_vocab_size=VOCAB_SIZE,)
-    vocab = data_loader.vocab
 
     train_loader, test_loader = data_loader.process_and_create_loaders(
         max_seq_length=max_seq_length,
@@ -161,7 +160,7 @@ def train_custom_binary_model(
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
-    train_losses, train_accuracies, test_losses, test_accuracies = train_model(
+    _, _, _, test_accuracies = train_model(
         model=model,
         train_loader=train_loader,
         test_loader=test_loader,
@@ -171,6 +170,12 @@ def train_custom_binary_model(
         num_epochs=epochs,
     )
 
-    metrics = ...
+    metrics = {
+        "final_test_accuracy": float(test_accuracies[-1]),
+        "epochs": float(epochs),
+        "train_samples": float(train_samples),
+        "test_samples": float(test_samples),
+        "max_seq_length": float(max_seq_length),
+    }
 
-    return model, vocab, metrics
+    return model, data_loader.vocab, metrics
