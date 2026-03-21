@@ -107,10 +107,38 @@ def render_binary_emotion() -> None:
                 step=1000,
             )
         
-        # advaced parameters might be changed by the user later on.
-        d_model, num_heads, num_layers = 128, 4, 2
-        d_ff = max(d_model, d_model * num_layers)
-        dropout = 0.2
+        # Optional advaced parameters might be changed by the user
+        with st.expander("Advanced model hyperparameters"):
+            adv1, adv2 = st.columns(2)
+            with adv1:
+                d_model = st.select_slider(
+                    "d_model",
+                    options=[64, 128, 256, 384],
+                    value=128,
+                )
+                num_layers = st.slider("num_layers", min_value=1, max_value=6, value=2)
+            with adv2:
+                num_heads = st.select_slider(
+                    "num_heads",
+                    options=[2, 4, 8],
+                    value=4,
+                )
+                dropout = st.slider(
+                    "dropout",
+                    min_value=0.0,
+                    max_value=0.6,
+                    value=0.2,
+                    step=0.05,
+                )
+
+            d_ff_default = max(128, d_model * 2)
+            d_ff = st.number_input(
+                "d_ff",
+                min_value=64,
+                max_value=2048,
+                value=d_ff_default,
+                step=64,
+            )
 
         if not validate_transformer_dimensions(int(d_model), int(num_heads)):
             st.error("Invalid model settings: d_model must be divisible by num_heads.")
@@ -137,7 +165,7 @@ def render_binary_emotion() -> None:
             st.session_state["custom_binary_max_seq_len"] = int(max_seq_length)
             st.session_state["custom_binary_metrics"] = metrics
             st.success(f"Training finished. Final test accuracy: {metrics['final_test_accuracy']:.2%}")
-            
+
         if "custom_binary_metrics" in st.session_state:
             m = st.session_state["custom_binary_metrics"]
             st.caption(
