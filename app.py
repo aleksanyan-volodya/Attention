@@ -23,7 +23,11 @@ def render_home() -> None:
 
 
 def render_binary_emotion() -> None:
-    """Render the binary emotion recognition section."""
+    """Render the binary emotion recognition section with 2 workflows.
+    
+    Workflow 1 uses the pretrained model.
+    Workflow 2 lets the user train a smaller custom model on CPU
+    """
     st.header("Binary Emotion Recognition")
     st.write("Task: negative / positive")
 
