@@ -116,7 +116,27 @@ def render_binary_emotion() -> None:
             st.error("Invalid model settings: d_model must be divisible by num_heads.")
 
         elif st.button("Start training", type="secondary"):
-            pass
+            # TODO : add possibility to show time left or epochs OR EVEN A GAME HAHAAHAH
+            with st.spinner("Training model on CPU. This may take several minutes..."):
+                trained_model, trained_vocab, metrics = train_custom_binary_model(
+                    epochs=epochs,
+                    learning_rate=float(learning_rate),
+                    batch_size=int(batch_size),
+                    max_seq_length=int(max_seq_length),
+                    train_samples=int(train_samples),
+                    test_samples=int(test_samples),
+                    vocab_build_size=int(vocab_build_size),
+                    d_model=int(d_model),
+                    num_heads=int(num_heads),
+                    num_layers=int(num_layers),
+                    d_ff=int(d_ff),
+                    dropout=float(dropout),
+                )
+            st.session_state["custom_binary_model"] = trained_model
+            st.session_state["custom_binary_vocab"] = trained_vocab
+            st.session_state["custom_binary_max_seq_len"] = int(max_seq_length)
+            st.session_state["custom_binary_metrics"] = metrics
+            st.success(f"Training finished. Final test accuracy: {metrics['final_test_accuracy']:.2%}")
 
     user_text = st.text_area(
         "Enter English text",
