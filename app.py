@@ -137,6 +137,27 @@ def render_binary_emotion() -> None:
             st.session_state["custom_binary_max_seq_len"] = int(max_seq_length)
             st.session_state["custom_binary_metrics"] = metrics
             st.success(f"Training finished. Final test accuracy: {metrics['final_test_accuracy']:.2%}")
+            
+        if "custom_binary_metrics" in st.session_state:
+            m = st.session_state["custom_binary_metrics"]
+            st.caption(
+                f"Last trained model: epochs={int(m['epochs'])}, train={int(m['train_samples'])}, "
+                f"test={int(m['test_samples'])}, max_seq_length={int(m['max_seq_length'])}, "
+                f"final_test_accuracy={m['final_test_accuracy']:.2%}"
+            )
+
+        # final sanity check
+        has_custom_model = (
+            "custom_binary_model" in st.session_state
+            and "custom_binary_vocab" in st.session_state
+        )
+        if has_custom_model:
+            model_source = "custom"
+            st.info("Using your trained model for prediction.")
+        else:
+            model_source = "pretrained"
+            st.info("No custom model trained yet. Predictions will use the pretrained model")
+
 
     user_text = st.text_area(
         "Enter English text",
