@@ -46,11 +46,20 @@ def render_binary_emotion() -> None:
         )
         st.write("Expected labels: **positive** / **negative**")
 
+    workflow_mode = st.radio(
+        "Choose workflow",
+        (
+            "Use pretrained model",
+            "Train a new model (CPU-friendly)",
+        ),
+    )
+
     user_text = st.text_area(
         "Enter English text",
         placeholder="Example: I really enjoyed this movie and would watch it again.",
         height=160,
     )
+    
     st.caption(f"Character count: {len(user_text)}")
 
     if st.button("Predict", type="primary"):
