@@ -202,7 +202,7 @@ def predict_sentiment(
     -------
     Tuple[str, float, np.ndarray]
         (predicted_emotion, confidence, both_class_probabilities)
-"""
+    """
     model.eval()
 
     # Handle both Vocabulary object and dict
