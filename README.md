@@ -9,7 +9,7 @@ Simple Streamlit app for:
 1. Clone the project
 
 ```bash
-git clone <your-repo-url>
+git clone <...>
 cd Attention
 ```
 
