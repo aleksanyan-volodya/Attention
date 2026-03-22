@@ -134,7 +134,6 @@ def process_text(
     return torch.tensor(ids, dtype=torch.long)
 
 
-# TODO complete once dataset is chosen
 class MultiEmotionDataLoader:
     """Load and preprocess a multi-emotion text dataset.
 
@@ -157,6 +156,34 @@ class MultiEmotionDataLoader:
         self.train_split = None
         self.test_split = None
         self.vocab = None
+        # Keep a compact 6-class setup mapped from GoEmotions ids.
+        self.goemotions_id_to_class = {
+            2: 0,   # anger
+            14: 1,  # fear
+            17: 2,  # joy
+            25: 3,  # sadness
+            26: 4,  # surprise
+            27: 5,  # neutral
+        }
+        self.train_records = []
+        self.test_records = []
+
+    def _prepare_records(self, split) -> List[Tuple[str, int]]:
+        """Convert raw split samples to (text, class_id) records.
+
+        We keep only single-label examples so training stays strictly multi-class
+        """
+        records = []
+        for row in split:
+            labels = row["labels"]
+            if len(labels) != 1:
+                continue
+            raw_label = labels[0]
+            mapped = self.goemotions_id_to_class.get(raw_label)
+            if mapped is None:
+                continue
+            records.append((row["text"], mapped))
+        return records
 
     def load_dataset(self, seed: int = 42) -> None:
         """Load the dataset from HuggingFace datasets library.
@@ -172,10 +199,15 @@ class MultiEmotionDataLoader:
         """
         print("Loading GoEmotions dataset...")
         dataset = load_dataset("go_emotions")
-        self.train_split = dataset["train"]
-        self.test_split = dataset["test"]
+        self.train_split = dataset["train"].shuffle(seed=seed)
+        self.test_split = dataset["test"].shuffle(seed=seed)
+        self.train_records = self._prepare_records(self.train_split)
+        self.test_records = self._prepare_records(self.test_split)
 
-        print(f"Train: {len(self.train_split)}, Test: {len(self.test_split)}")
+        print(
+            f"Filtered single-label samples -> "
+            f"Train: {len(self.train_records)}, Test: {len(self.test_records)}"
+        )
 
     def build_vocabulary(
         self,
@@ -196,13 +228,13 @@ class MultiEmotionDataLoader:
         Vocabulary
             The built vocabulary, also stored in self.vocab.
         """
-        if self.train_split is None:
+        if not self.train_records:
             raise ValueError("Load dataset first with load_dataset()")
 
+        num_samples = min(num_samples, len(self.train_records))
         print(f"Building vocabulary from {num_samples} samples...")
 
-        # TODO: adjust the field name "text" to match the dataset's column name.
-        samples = [self.train_split[i]["text"] for i in range(num_samples)]
+        samples = [text for text, _ in self.train_records[:num_samples]]
 
         self.vocab = Vocabulary()
         self.vocab.build_from_samples(samples, max_vocab_size)
@@ -238,28 +270,28 @@ class MultiEmotionDataLoader:
         Tuple[DataLoader, DataLoader]
             (train_loader, test_loader)
 
-        Notes
-        -----
-        TODO: once the dataset is loaded:
-          - Adjust the column names ("text", "label") to the actual dataset fields.
-          - For multi-label datasets, convert labels to float tensors and
-            use BCEWithLogitsLoss instead of CrossEntropyLoss.
+            Notes
+            -----
+            This implementation assumes a strict multi-class setup on filtered,
+            single-label GoEmotions samples.
         """
         if self.vocab is None:
             raise ValueError("Call build_vocabulary() first.")
+
+            if not self.train_records or not self.test_records:
+                raise ValueError("No records available. Call load_dataset() first.")
+
+            train_samples = min(train_samples, len(self.train_records))
+            test_samples = min(test_samples, len(self.test_records))
 
         print(f"Processing {train_samples} training samples...")
         train_texts, train_labels = [], []
 
         for i in range(train_samples):
-            processed = process_text(
-                self.train_split[i]["text"],   # TODO: check column name
-                self.vocab,
-                max_seq_length,
-                self.vocab.pad_idx,
-            )
+            text, label = self.train_records[i]
+            processed = process_text(text, self.vocab, max_seq_length, self.vocab.pad_idx)
             train_texts.append(processed)
-            train_labels.append(self.train_split[i]["label"])  # TODO: check column name
+            train_labels.append(label)
             if verbose and (i + 1) % 1000 == 0:
                 print(f"  {i + 1} processed")
 
@@ -271,14 +303,10 @@ class MultiEmotionDataLoader:
         test_texts, test_labels = [], []
 
         for i in range(test_samples):
-            processed = process_text(
-                self.test_split[i]["text"],   # TODO: check column name
-                self.vocab,
-                max_seq_length,
-                self.vocab.pad_idx,
-            )
+            text, label = self.test_records[i]
+            processed = process_text(text, self.vocab, max_seq_length, self.vocab.pad_idx)
             test_texts.append(processed)
-            test_labels.append(self.test_split[i]["label"])  # TODO: check column name
+            test_labels.append(label)
             if verbose and (i + 1) % 500 == 0:
                 print(f"  {i + 1} processed")
 
