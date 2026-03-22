@@ -1,35 +1,12 @@
-"""
-Data loading, tokenization, and preprocessing for multi-emotion recognition.
+"""Data loading utilities for multi-label emotion recognition.
 
-SmartTokenizer, Vocabulary, and process_text are identical to those in
-`emotions/data.py`, they are text utilities with no dependency on
-the specific dataset or number of classes.
-
-The dataset-specific part is isolated in MultiEmotionDataLoader.
-That class is a placeholder: its internal logic (which HuggingFace dataset
-to load, how labels are encoded, whether it is multi-class or multi-label)
-will be filled in once the dataset is decided.
-
-NOTE :
-    Multi-class vs multi-label
-    ---
-    Multi-class  : each sample has exactly ONE emotion label (the most common one).
-                Labels are integers in range [0, NUM_CLASSES[.
-                Loss: CrossEntropyLoss is used
-
-    Multi-label  : each sample CAN have several emotions at once 
-                (e.g. "I am happy but also a bit worried").
-                Labels are binary vectors of length NUM_CLASSES.
-                Loss: BCEWithLogitsLoss (probably).
-
-For now, we assume multi-class (nearly the same setup as the binary model,
-just with more classes). A comment marks where we have to change if multi-label 
-is needed.
+This module keeps the same tokenization and vocabulary utilities used in the
+binary workflow, but it creates multi-hot labels for GoEmotions.
 """
 
 import re
 from collections import Counter
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -135,28 +112,13 @@ def process_text(
 
 
 class MultiEmotionDataLoader:
-    """Load and preprocess a multi-emotion text dataset.
-
-    This class is intentionally left as a skeleton. The exact implementation
-    (which dataset to load, how to read labels, train/test split names, etc.)
-    depends on the dataset that will be chosen.
-
-    Once a dataset is chosen, need to implement:
-        1. load_dataset()     -> fill self.train_split and self.test_split
-        2. build_vocabulary() -> same as in `emotions/data.py`
-        3. process_and_create_loaders() -> encode texts, create DataLoaders
-
-    For multi-label datasets, labels should be float tensors of shape
-    (num_samples, NUM_CLASSES) and the loss function must be BCEWithLogitsLoss.
-    For multi-class datasets (one label per sample), labels stay as LongTensors
-    and the loss is CrossEntropyLoss which is same as the binary model
-    """
+    """Load and preprocess multi-label data from GoEmotions."""
 
     def __init__(self):
         self.train_split = None
         self.test_split = None
         self.vocab = None
-        # Keep a compact 6-class setup mapped from GoEmotions ids.
+        # Compact 6-label mapping used in this project.
         self.goemotions_id_to_class = {
             2: 0,   # anger
             14: 1,  # fear
@@ -168,21 +130,38 @@ class MultiEmotionDataLoader:
         self.train_records = []
         self.test_records = []
 
-    def _prepare_records(self, split) -> List[Tuple[str, int]]:
-        """Convert raw split samples to (text, class_id) records.
+    def _to_multihot(self, labels: List[int]) -> Optional[List[float]]:
+        """Convert GoEmotions label ids into a compact multi-hot vector.
 
-        We keep only single-label examples so training stays strictly multi-class
+        Parameters
+        ----------
+        labels : List[int]
+            Raw label ids from GoEmotions for one sample.
+
+        Returns
+        -------
+        Optional[List[float]]
+            Multi-hot vector for the mapped labels.
+            Returns None if no selected labels exist for this sample.
         """
+        vector = [0.0] * len(self.goemotions_id_to_class)
+        for raw_label in labels:
+            mapped = self.goemotions_id_to_class.get(raw_label)
+            if mapped is not None:
+                vector[mapped] = 1.0
+
+        if sum(vector) == 0:
+            return None
+        return vector
+
+    def _prepare_records(self, split) -> List[Tuple[str, List[float]]]:
+        """Convert one split into (text, multi_hot_labels) records."""
         records = []
         for row in split:
-            labels = row["labels"]
-            if len(labels) != 1:
+            label_vector = self._to_multihot(row["labels"])
+            if label_vector is None:
                 continue
-            raw_label = labels[0]
-            mapped = self.goemotions_id_to_class.get(raw_label)
-            if mapped is None:
-                continue
-            records.append((row["text"], mapped))
+            records.append((row["text"], label_vector))
         return records
 
     def load_dataset(self, seed: int = 42) -> None:
@@ -205,7 +184,7 @@ class MultiEmotionDataLoader:
         self.test_records = self._prepare_records(self.test_split)
 
         print(
-            f"Filtered single-label samples -> "
+            f"Prepared multi-label samples -> "
             f"Train: {len(self.train_records)}, Test: {len(self.test_records)}"
         )
 
@@ -232,6 +211,7 @@ class MultiEmotionDataLoader:
             raise ValueError("Load dataset first with load_dataset()")
 
         num_samples = min(num_samples, len(self.train_records))
+
         print(f"Building vocabulary from {num_samples} samples...")
 
         samples = [text for text, _ in self.train_records[:num_samples]]
@@ -270,19 +250,18 @@ class MultiEmotionDataLoader:
         Tuple[DataLoader, DataLoader]
             (train_loader, test_loader)
 
-            Notes
-            -----
-            This implementation assumes a strict multi-class setup on filtered,
-            single-label GoEmotions samples.
+        Notes
+        -----
+        Labels are returned as multi-hot float vectors.
         """
         if self.vocab is None:
             raise ValueError("Call build_vocabulary() first.")
 
-            if not self.train_records or not self.test_records:
-                raise ValueError("No records available. Call load_dataset() first.")
+        if not self.train_records or not self.test_records:
+            raise ValueError("No records available. Call load_dataset() first.")
 
-            train_samples = min(train_samples, len(self.train_records))
-            test_samples = min(test_samples, len(self.test_records))
+        train_samples = min(train_samples, len(self.train_records))
+        test_samples = min(test_samples, len(self.test_records))
 
         print(f"Processing {train_samples} training samples...")
         train_texts, train_labels = [], []
@@ -296,8 +275,7 @@ class MultiEmotionDataLoader:
                 print(f"  {i + 1} processed")
 
         train_texts = torch.stack(train_texts)
-        train_labels = torch.tensor(train_labels, dtype=torch.long)
-        # For multi-label: torch.tensor(train_labels, dtype=torch.float)
+        train_labels = torch.tensor(train_labels, dtype=torch.float)
 
         print(f"Processing {test_samples} test samples...")
         test_texts, test_labels = [], []
@@ -311,8 +289,7 @@ class MultiEmotionDataLoader:
                 print(f"  {i + 1} processed")
 
         test_texts = torch.stack(test_texts)
-        test_labels = torch.tensor(test_labels, dtype=torch.long)
-        # For multi-label: torch.tensor(test_labels, dtype=torch.float)
+        test_labels = torch.tensor(test_labels, dtype=torch.float)
 
         train_loader = DataLoader(
             TensorDataset(train_texts, train_labels),

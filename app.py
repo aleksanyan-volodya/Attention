@@ -12,6 +12,12 @@ from emotions.app_binary_helpers import (
     train_custom_binary_model,
 )
 from emotions.train import predict_sentiment, explain_prediction
+from multi_emotions.app_multilabel_helpers import (
+    predict_multilabel,
+    train_custom_multilabel_model,
+    validate_transformer_dimensions as validate_transformer_dimensions_multilabel,
+)
+from multi_emotions.config import EMOTION_LABELS
 
 
 @st.cache_resource
@@ -252,10 +258,196 @@ def render_binary_emotion() -> None:
 
 
 def render_multiclass_emotion() -> None:
-    """Render the multiclass emotion prediction section."""
-    st.header("Multiclass Emotion Prediction")
-    st.write("Task: sad, joy, fear, ...")
-    st.write("Sorry, coming soon... ://")
+    """Render the multi-label emotion section.
+
+    This workflow is train-only. No pretrained model is provided.
+    """
+    st.header("Multi-label Emotion Prediction")
+    st.write("Task: one text can have multiple emotions at once")
+
+    st.markdown(
+        """
+        This section trains a **multi-label emotion model** on GoEmotions.
+        Unlike binary sentiment, there is **no pretrained model** here.
+        You need to train your own model first, then run predictions.
+        """
+    )
+
+    st.warning(
+        "Training runs on CPU in your setup, so it can be slow. "
+        "Start with small values first."
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        epochs = st.slider("Epochs", min_value=1, max_value=15, value=3)
+        learning_rate = st.number_input(
+            "Learning rate",
+            min_value=1e-6,
+            max_value=1e-2,
+            value=5e-5,
+            format="%.6f",
+        )
+        batch_size = st.select_slider(
+            "Batch size",
+            options=[8, 16, 32, 64],
+            value=16,
+        )
+        max_seq_length = st.select_slider(
+            "Max sequence length",
+            options=[64, 128, 256, 384],
+            value=128,
+        )
+        threshold = st.slider(
+            "Prediction threshold",
+            min_value=0.1,
+            max_value=0.9,
+            value=0.5,
+            step=0.05,
+        )
+    with col2:
+        train_samples = st.slider(
+            "Train subset size",
+            min_value=1000,
+            max_value=12000,
+            value=4000,
+            step=500,
+        )
+        test_samples = st.slider(
+            "Test subset size",
+            min_value=500,
+            max_value=5000,
+            value=1200,
+            step=250,
+        )
+        vocab_build_size = st.slider(
+            "Vocabulary build samples",
+            min_value=2000,
+            max_value=25000,
+            value=8000,
+            step=1000,
+        )
+
+    with st.expander("Advanced model hyperparameters"):
+        adv1, adv2 = st.columns(2)
+        with adv1:
+            d_model = st.select_slider(
+                "d_model",
+                options=[64, 128, 256, 384],
+                value=128,
+            )
+            num_layers = st.slider("num_layers", min_value=1, max_value=6, value=2)
+        with adv2:
+            num_heads = st.select_slider(
+                "num_heads",
+                options=[2, 4, 8],
+                value=4,
+            )
+            dropout = st.slider(
+                "dropout",
+                min_value=0.0,
+                max_value=0.6,
+                value=0.2,
+                step=0.05,
+            )
+
+        d_ff_default = max(128, d_model * 2)
+        d_ff = st.number_input(
+            "d_ff",
+            min_value=64,
+            max_value=2048,
+            value=d_ff_default,
+            step=64,
+        )
+
+    if not validate_transformer_dimensions_multilabel(int(d_model), int(num_heads)):
+        st.error("Invalid model settings: d_model must be divisible by num_heads.")
+
+    elif st.button("Start multi-label training", type="secondary"):
+        with st.spinner("Training multi-label model on CPU. This may take several minutes..."):
+            trained_model, trained_vocab, metrics = train_custom_multilabel_model(
+                epochs=epochs,
+                learning_rate=float(learning_rate),
+                batch_size=int(batch_size),
+                max_seq_length=int(max_seq_length),
+                train_samples=int(train_samples),
+                test_samples=int(test_samples),
+                vocab_build_size=int(vocab_build_size),
+                d_model=int(d_model),
+                num_heads=int(num_heads),
+                num_layers=int(num_layers),
+                d_ff=int(d_ff),
+                dropout=float(dropout),
+                threshold=float(threshold),
+            )
+
+        st.session_state["custom_multilabel_model"] = trained_model
+        st.session_state["custom_multilabel_vocab"] = trained_vocab
+        st.session_state["custom_multilabel_max_seq_len"] = int(max_seq_length)
+        st.session_state["custom_multilabel_threshold"] = float(threshold)
+        st.session_state["custom_multilabel_metrics"] = metrics
+
+        st.success(
+            "Training finished. "
+            f"Final test micro-F1: {metrics['final_test_f1']:.2%}"
+        )
+
+    if "custom_multilabel_metrics" in st.session_state:
+        m = st.session_state["custom_multilabel_metrics"]
+        st.caption(
+            f"Last trained model: epochs={int(m['epochs'])}, train={int(m['train_samples'])}, "
+            f"test={int(m['test_samples'])}, max_seq_length={int(m['max_seq_length'])}, "
+            f"threshold={m['threshold']:.2f}, final_test_f1={m['final_test_f1']:.2%}"
+        )
+
+    has_custom_model = (
+        "custom_multilabel_model" in st.session_state
+        and "custom_multilabel_vocab" in st.session_state
+    )
+    if not has_custom_model:
+        st.info("Train a model first. Prediction is disabled until training is finished.")
+        return
+
+    st.info(
+        "Using your trained multi-label model for prediction. "
+        f"Labels: {', '.join(EMOTION_LABELS)}"
+    )
+
+    user_text = st.text_area(
+        "Enter English text",
+        placeholder="Example: I am excited and nervous about tomorrow.",
+        height=160,
+    )
+    st.caption(f"Character count: {len(user_text)}")
+
+    if st.button("Predict multi-label emotions", type="primary"):
+        if not user_text.strip():
+            st.error("Please enter some text before clicking Predict.")
+            return
+
+        model = st.session_state["custom_multilabel_model"]
+        vocab = st.session_state["custom_multilabel_vocab"]
+        max_len = st.session_state.get("custom_multilabel_max_seq_len", 128)
+        pred_threshold = st.session_state.get("custom_multilabel_threshold", 0.5)
+
+        with st.spinner("Analyzing text..."):
+            predicted_labels, prob_dict = predict_multilabel(
+                text=user_text,
+                model=model,
+                vocab=vocab,
+                threshold=float(pred_threshold),
+                max_length=int(max_len),
+            )
+
+        st.subheader("Prediction")
+        st.success(f"Predicted labels: {', '.join(predicted_labels)}")
+        st.caption(f"Threshold used: {float(pred_threshold):.2f}")
+
+        st.subheader("Per-label probabilities")
+        for label in EMOTION_LABELS:
+            prob = float(prob_dict[label])
+            st.write(f"{label}: {prob:.1%}")
+            st.progress(min(max(prob, 0.0), 1.0))
 
 
 def render_third_model() -> None:
@@ -274,7 +466,7 @@ def main() -> None:
         (
             "Main Page",
             "Binary Emotion Recognition",
-            "Multiclass Emotion Prediction",
+            "Multi-label Emotion Prediction",
             "3rd Model",
         ),
     )
@@ -283,7 +475,7 @@ def main() -> None:
         render_home()
     elif app_mode == "Binary Emotion Recognition":
         render_binary_emotion()
-    elif app_mode == "Multiclass Emotion Prediction":
+    elif app_mode == "Multi-label Emotion Prediction":
         render_multiclass_emotion()
     else:
         render_third_model()
