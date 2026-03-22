@@ -20,6 +20,167 @@ from multi_emotions.app_multilabel_helpers import (
 from multi_emotions.config import EMOTION_LABELS
 
 
+def inject_global_styles() -> None:
+    """Apply a custom visual theme for a cleaner and more appealing UI."""
+    st.markdown(
+        """
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --accent: #d9501e;
+            --accent-soft: #fef0e7;
+            --ink: #1f2023;
+            --muted: #5f6670;
+            --card: #ffffff;
+            --border: #e8ddd5;
+        }
+
+        .stApp {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background:
+                radial-gradient(circle at 5% 0%, #ffe8d6 0%, transparent 45%),
+                radial-gradient(circle at 100% 12%, #e3f6ed 0%, transparent 35%),
+                linear-gradient(180deg, #fff9f5 0%, #f8f8f6 100%);
+            color: var(--ink);
+        }
+
+        h1, h2, h3, .stMarkdown strong {
+            font-family: 'Manrope', sans-serif;
+            letter-spacing: -0.01em;
+        }
+
+        [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #fff7f1 0%, #ffffff 100%);
+            border-right: 1px solid var(--border);
+        }
+
+        [data-testid="stMetric"] {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 8px 12px;
+            box-shadow: 0 10px 30px rgba(43, 38, 35, 0.05);
+        }
+
+        .hero {
+            background: linear-gradient(130deg, #fff2e4 0%, #ffffff 65%);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px 24px 20px 24px;
+            margin-bottom: 14px;
+            box-shadow: 0 14px 30px rgba(43, 38, 35, 0.07);
+        }
+
+        .hero-kicker {
+            color: var(--accent);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .hero-title {
+            font-family: 'Manrope', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: var(--ink);
+            margin: 0 0 6px 0;
+        }
+
+        .hero-subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+            margin: 0;
+            max-width: 760px;
+        }
+
+        .soft-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 24px rgba(20, 20, 20, 0.04);
+            margin-bottom: 10px;
+        }
+
+        .soft-card-title {
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--ink);
+        }
+
+        .soft-card-body {
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+
+        .pill-row {
+            margin: 8px 0 10px 0;
+        }
+
+        .pill {
+            display: inline-block;
+            background: var(--accent-soft);
+            border: 1px solid #f4ceb8;
+            color: #8a3717;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0 6px 6px 0;
+        }
+
+        div[data-testid="stProgressBar"] > div > div > div {
+            background: linear-gradient(90deg, #d9501e 0%, #ff7d45 100%);
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 18px 16px;
+            }
+
+            .hero-title {
+                font-size: 1.6rem;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_hero(title: str, subtitle: str, kicker: str) -> None:
+    """Render a reusable hero block for each section."""
+    st.markdown(
+        f"""
+        <section class="hero">
+            <div class="hero-kicker">{kicker}</div>
+            <h1 class="hero-title">{title}</h1>
+            <p class="hero-subtitle">{subtitle}</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_info_card(title: str, body: str) -> None:
+    """Render a compact white card with border and shadow."""
+    st.markdown(
+        f"""
+        <div class="soft-card">
+            <div class="soft-card-title">{title}</div>
+            <div class="soft-card-body">{body}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 @st.cache_resource
 def load_binary_model():
     """Load the binary sentiment model and vocabulary (cached)."""
@@ -27,9 +188,34 @@ def load_binary_model():
 
 def render_home() -> None:
     """Render the main page."""
-    st.header("Main Page")
-    st.write("Authors: Volodya Aleksanyan, Paul Gautier")
-    st.info("Welcome! Use the sidebar to switch between sections.")
+    render_hero(
+        title="Attention: Emotion Intelligence Playground",
+        subtitle=(
+            "Explore sentiment and emotion models in an interactive space. "
+            "Train faster experiments on CPU, inspect predictions, and compare workflows."
+        ),
+        kicker="Transformer NLP",
+    )
+
+    left, right = st.columns([1.2, 1], gap="large")
+
+    with left:
+        render_info_card(
+            "What you can do",
+            "Run binary sentiment inference instantly with a pretrained model, "
+            "or train your own compact model and use it for custom predictions.",
+        )
+        render_info_card(
+            "Multi-label workflow",
+            "Train a model on GoEmotions and predict several emotions for one text. "
+            "Great for mixed feelings where one label is not enough.",
+        )
+    with right:
+        st.metric("Models in app", "2", "Binary + Multi-label")
+        st.metric("Inference mode", "Interactive", "Session-based")
+        st.metric("Authors", "2", "Volodya Aleksanyan, Paul Gautier")
+
+    st.info("Use the sidebar to switch sections and start experimenting.")
 
 
 def render_binary_emotion() -> None:
@@ -38,8 +224,22 @@ def render_binary_emotion() -> None:
     Workflow 1 uses the pretrained model.
     Workflow 2 lets the user train a smaller custom model on CPU
     """
-    st.header("Binary Emotion Recognition")
-    st.write("Task: negative / positive")
+    render_hero(
+        title="Binary Emotion Recognition",
+        subtitle="Classify text as positive or negative and inspect the confidence and influential tokens.",
+        kicker="Workflow 1",
+    )
+
+    st.markdown(
+        """
+        <div class="pill-row">
+            <span class="pill">Labels: positive / negative</span>
+            <span class="pill">Dataset: IMDb</span>
+            <span class="pill">Runtime: CPU friendly</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         """
@@ -49,7 +249,7 @@ def render_binary_emotion() -> None:
         """
     )
 
-    with st.expander("What this section is for"):
+    with st.expander("What this section is for", expanded=False):
         st.write(
             "Use this page to test short or long English text snippets and get "
             "a binary sentiment prediction."
@@ -62,6 +262,7 @@ def render_binary_emotion() -> None:
             "Use pretrained model",
             "Train a new model (CPU-friendly)",
         ),
+        horizontal=True,
     )
     
     if workflow_mode == "Use pretrained model":
@@ -183,6 +384,9 @@ def render_binary_emotion() -> None:
                 f"test={int(m['test_samples'])}, max_seq_length={int(m['max_seq_length'])}, "
                 f"final_test_accuracy={m['final_test_accuracy']:.2%}"
             )
+            c1, c2 = st.columns(2)
+            c1.metric("Final test accuracy", f"{m['final_test_accuracy']:.2%}")
+            c2.metric("Epochs", f"{int(m['epochs'])}")
 
         # final sanity check
         has_custom_model = (
@@ -203,6 +407,7 @@ def render_binary_emotion() -> None:
         height=160,
     )
     
+    st.progress(min(len(user_text) / 600.0, 1.0))
     st.caption(f"Character count: {len(user_text)}")
 
     if st.button("Predict", type="primary"):
@@ -245,6 +450,11 @@ def render_binary_emotion() -> None:
         st.caption(
             f"Probabilities: Negative {probs[0]:.1%} | Positive {probs[1]:.1%}"
         )
+        p1, p2 = st.columns(2)
+        p1.progress(min(max(float(probs[0]), 0.0), 1.0))
+        p1.caption(f"Negative: {probs[0]:.1%}")
+        p2.progress(min(max(float(probs[1]), 0.0), 1.0))
+        p2.caption(f"Positive: {probs[1]:.1%}")
 
         # Show which tokens contributed most
         st.subheader("Most influential tokens")
@@ -253,8 +463,12 @@ def render_binary_emotion() -> None:
             "pulled the model toward this prediction (normalized, 1.0 = most important)."
         )
         for token, score in top_tokens:
-            bar = int(score * 20)  # scale to 20-char bar
-            st.text(f"{token:<20} {'█' * bar} {score:.2f}")
+            left, right = st.columns([3, 2])
+            with left:
+                st.write(f"**{token}**")
+            with right:
+                st.progress(min(max(float(score), 0.0), 1.0))
+                st.caption(f"importance: {score:.2f}")
 
 
 def render_multiclass_emotion() -> None:
@@ -262,8 +476,22 @@ def render_multiclass_emotion() -> None:
 
     This workflow is train-only. No pretrained model is provided.
     """
-    st.header("Multi-label Emotion Prediction")
-    st.write("Task: one text can have multiple emotions at once")
+    render_hero(
+        title="Multi-label Emotion Prediction",
+        subtitle="Train your own GoEmotions model and predict multiple emotions from one text.",
+        kicker="Workflow 2",
+    )
+
+    st.markdown(
+        """
+        <div class="pill-row">
+            <span class="pill">Task: multi-label</span>
+            <span class="pill">Dataset: GoEmotions</span>
+            <span class="pill">Train first, then predict</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         """
@@ -399,6 +627,9 @@ def render_multiclass_emotion() -> None:
             f"test={int(m['test_samples'])}, max_seq_length={int(m['max_seq_length'])}, "
             f"threshold={m['threshold']:.2f}, final_test_f1={m['final_test_f1']:.2%}"
         )
+        m1, m2 = st.columns(2)
+        m1.metric("Final test micro-F1", f"{m['final_test_f1']:.2%}")
+        m2.metric("Threshold", f"{m['threshold']:.2f}")
 
     has_custom_model = (
         "custom_multilabel_model" in st.session_state
@@ -418,6 +649,7 @@ def render_multiclass_emotion() -> None:
         placeholder="Example: I am excited and nervous about tomorrow.",
         height=160,
     )
+    st.progress(min(len(user_text) / 600.0, 1.0))
     st.caption(f"Character count: {len(user_text)}")
 
     if st.button("Predict multi-label emotions", type="primary"):
@@ -446,23 +678,38 @@ def render_multiclass_emotion() -> None:
         st.subheader("Per-label probabilities")
         for label in EMOTION_LABELS:
             prob = float(prob_dict[label])
-            st.write(f"{label}: {prob:.1%}")
-            st.progress(min(max(prob, 0.0), 1.0))
+            lcol, pcol = st.columns([1.5, 3])
+            with lcol:
+                st.write(f"**{label}**")
+            with pcol:
+                st.progress(min(max(prob, 0.0), 1.0))
+                st.caption(f"{prob:.1%}")
 
 
 def render_third_model() -> None:
     """Render the third-model placeholder section."""
-    st.header("3rd Model")
-    st.write("Sorry, coming soon... ://")
+    render_hero(
+        title="Third Model",
+        subtitle="This section is reserved for the next experiment and will be available soon.",
+        kicker="Coming soon",
+    )
+    render_info_card(
+        "Planned direction",
+        "This slot can host an explainability module, a multilingual model, "
+        "or a comparison benchmark between architectures.",
+    )
 
 
 def main() -> None:
     """Render the app with basic section navigation."""
-    st.set_page_config(page_title="Attention", layout="centered")
-    st.title("Attention")
+    st.set_page_config(page_title="Attention", layout="wide")
+    inject_global_styles()
+
+    st.markdown("## Attention")
+    st.caption("Interactive NLP dashboard for emotion and sentiment workflows")
 
     app_mode = st.sidebar.selectbox(
-        "Choose the app mode",
+        "Choose section",
         (
             "Main Page",
             "Binary Emotion Recognition",
