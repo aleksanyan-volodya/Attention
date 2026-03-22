@@ -1,18 +1,47 @@
-# Emotion Recognition with Attention
+# Attention App
 
-This project focuses on recognizing emotions from user messages using an
-attention-based architecture inspired by *Attention Is All You Need*. The
-Streamlit app is intentionally minimal while the core model work evolves.
+Simple Streamlit app for:
+- Binary sentiment prediction (positive/negative)
+- Multi-label emotion prediction
 
-## Run the app
+## Quick Start
+
+1. Clone the project
+
+```bash
+git clone <your-repo-url>
+cd Attention
+```
+
+2. Create and activate a virtual environment (workon)
+
+```bash
+mkvirtualenv attention
+workon attention
+```
+
+3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Run the app
 
 ```bash
 streamlit run app.py
 ```
 
-## Docs
+5. Open in browser
 
-Sphinx documentation lives in [docs/](docs/). Build with:
+Use the local URL shown in terminal (usually http://localhost:8503).
+
+## Notes
+
+- First training run can be slow on CPU.
+- Keep internet on if datasets need to download on first use.
+
+## Optional: Build Docs
 
 ```bash
 cd docs
