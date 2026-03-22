@@ -1,5 +1,9 @@
 import streamlit as st
 import sys
+import threading
+import time
+from queue import Queue
+from typing import Callable
 
 # Add emotions module to path
 sys.path.append("emotions")
@@ -224,6 +228,74 @@ def render_info_card(title: str, body: str) -> None:
     )
 
 
+def _format_duration(seconds: float) -> str:
+    """Format seconds as mm:ss."""
+    total_seconds = max(int(seconds), 0)
+    minutes, secs = divmod(total_seconds, 60)
+    return f"{minutes:02d}:{secs:02d}"
+
+
+def run_training_with_timer(
+    runner: Callable[[], tuple],
+    progress_label: str,
+    estimate_key: str,
+) -> tuple:
+    """Run training in a worker thread and display elapsed/estimated time."""
+    status_box = st.empty()
+    progress_bar = st.progress(0.0, text=f"{progress_label}... preparing")
+
+    result_queue: Queue = Queue(maxsize=1)
+
+    def _worker() -> None:
+        try:
+            result = runner()
+            result_queue.put(("ok", result))
+        except Exception as exc:  # pragma: no cover - UI error path
+            result_queue.put(("error", exc))
+
+    start_time = time.perf_counter()
+    worker = threading.Thread(target=_worker, daemon=True)
+    worker.start()
+
+    previous_estimate = st.session_state.get(estimate_key)
+
+    while worker.is_alive():
+        elapsed = time.perf_counter() - start_time
+        if previous_estimate is not None:
+            remaining = max(float(previous_estimate) - elapsed, 0.0)
+            progress_value = min(elapsed / max(float(previous_estimate), 1.0), 0.97)
+            progress_text = (
+                f"{progress_label}... elapsed {_format_duration(elapsed)} | "
+                f"est. remaining {_format_duration(remaining)}"
+            )
+        else:
+            progress_value = min(elapsed / 300.0, 0.97)
+            progress_text = f"{progress_label}... elapsed {_format_duration(elapsed)}"
+
+        status_box.info(progress_text)
+        progress_bar.progress(progress_value, text=progress_text)
+        time.sleep(1)
+
+    worker.join()
+    elapsed_total = time.perf_counter() - start_time
+
+    status, payload = result_queue.get()
+    if status == "error":
+        raise payload
+
+    previous = st.session_state.get(estimate_key)
+    if previous is None:
+        st.session_state[estimate_key] = float(elapsed_total)
+    else:
+        st.session_state[estimate_key] = 0.65 * float(previous) + 0.35 * float(elapsed_total)
+
+    finish_text = f"{progress_label} finished in {_format_duration(elapsed_total)}"
+    status_box.success(finish_text)
+    progress_bar.progress(1.0, text=finish_text)
+
+    return payload, float(elapsed_total)
+
+
 @st.cache_resource
 def load_binary_model():
     """Load the binary sentiment model and vocabulary (cached)."""
@@ -397,10 +469,16 @@ def render_binary_emotion() -> None:
         if not validate_transformer_dimensions(int(d_model), int(num_heads)):
             st.error("Invalid model settings: d_model must be divisible by num_heads.")
 
-        elif st.button("Start training", type="secondary"):
-            # TODO : add possibility to show time left or epochs OR EVEN A GAME HAHAAHAH
-            with st.spinner("Training model on CPU. This may take several minutes..."):
-                trained_model, trained_vocab, metrics = train_custom_binary_model(
+        estimate_key = "binary_training_avg_seconds"
+        if estimate_key in st.session_state:
+            st.caption(
+                "Estimated training time from previous runs: "
+                f"~{_format_duration(float(st.session_state[estimate_key]))}"
+            )
+
+        if st.button("Start training", type="secondary"):
+            def _binary_runner() -> tuple:
+                return train_custom_binary_model(
                     epochs=epochs,
                     learning_rate=float(learning_rate),
                     batch_size=int(batch_size),
@@ -414,11 +492,21 @@ def render_binary_emotion() -> None:
                     d_ff=int(d_ff),
                     dropout=float(dropout),
                 )
+
+            (trained_model, trained_vocab, metrics), elapsed_seconds = run_training_with_timer(
+                runner=_binary_runner,
+                progress_label="Binary model training",
+                estimate_key=estimate_key,
+            )
             st.session_state["custom_binary_model"] = trained_model
             st.session_state["custom_binary_vocab"] = trained_vocab
             st.session_state["custom_binary_max_seq_len"] = int(max_seq_length)
             st.session_state["custom_binary_metrics"] = metrics
-            st.success(f"Training finished. Final test accuracy: {metrics['final_test_accuracy']:.2%}")
+            st.success(
+                "Training finished. "
+                f"Final test accuracy: {metrics['final_test_accuracy']:.2%} "
+                f"| Duration: {_format_duration(elapsed_seconds)}"
+            )
 
         if "custom_binary_metrics" in st.session_state:
             m = st.session_state["custom_binary_metrics"]
@@ -634,9 +722,16 @@ def render_multiclass_emotion() -> None:
     if not validate_transformer_dimensions_multilabel(int(d_model), int(num_heads)):
         st.error("Invalid model settings: d_model must be divisible by num_heads.")
 
-    elif st.button("Start multi-label training", type="secondary"):
-        with st.spinner("Training multi-label model on CPU. This may take several minutes..."):
-            trained_model, trained_vocab, metrics = train_custom_multilabel_model(
+    estimate_key = "multilabel_training_avg_seconds"
+    if estimate_key in st.session_state:
+        st.caption(
+            "Estimated training time from previous runs: "
+            f"~{_format_duration(float(st.session_state[estimate_key]))}"
+        )
+
+    if st.button("Start multi-label training", type="secondary"):
+        def _multilabel_runner() -> tuple:
+            return train_custom_multilabel_model(
                 epochs=epochs,
                 learning_rate=float(learning_rate),
                 batch_size=int(batch_size),
@@ -652,6 +747,12 @@ def render_multiclass_emotion() -> None:
                 threshold=float(threshold),
             )
 
+        (trained_model, trained_vocab, metrics), elapsed_seconds = run_training_with_timer(
+            runner=_multilabel_runner,
+            progress_label="Multi-label model training",
+            estimate_key=estimate_key,
+        )
+
         st.session_state["custom_multilabel_model"] = trained_model
         st.session_state["custom_multilabel_vocab"] = trained_vocab
         st.session_state["custom_multilabel_max_seq_len"] = int(max_seq_length)
@@ -660,7 +761,8 @@ def render_multiclass_emotion() -> None:
 
         st.success(
             "Training finished. "
-            f"Final test micro-F1: {metrics['final_test_f1']:.2%}"
+            f"Final test micro-F1: {metrics['final_test_f1']:.2%} "
+            f"| Duration: {_format_duration(elapsed_seconds)}"
         )
 
     if "custom_multilabel_metrics" in st.session_state:
