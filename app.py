@@ -28,21 +28,36 @@ def inject_global_styles() -> None:
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
         :root {
-            --accent: #d9501e;
-            --accent-soft: #fef0e7;
-            --ink: #1f2023;
-            --muted: #5f6670;
+            --accent: #bf3f17;
+            --accent-soft: #fde9dc;
+            --ink: #16181b;
+            --muted: #444c57;
             --card: #ffffff;
-            --border: #e8ddd5;
+            --border: #ddcfc4;
         }
 
         .stApp {
             font-family: 'IBM Plex Sans', sans-serif;
             background:
-                radial-gradient(circle at 5% 0%, #ffe8d6 0%, transparent 45%),
-                radial-gradient(circle at 100% 12%, #e3f6ed 0%, transparent 35%),
-                linear-gradient(180deg, #fff9f5 0%, #f8f8f6 100%);
+                radial-gradient(circle at 5% 0%, #ffeede 0%, transparent 45%),
+                radial-gradient(circle at 100% 12%, #edf8f2 0%, transparent 35%),
+                linear-gradient(180deg, #fffaf7 0%, #f6f7f5 100%);
             color: var(--ink);
+        }
+
+        .stApp,
+        .stApp p,
+        .stApp li,
+        .stApp label,
+        .stApp span,
+        .stApp div {
+            color: var(--ink);
+        }
+
+        .stCaption,
+        .soft-card-body,
+        .hero-subtitle {
+            color: var(--muted) !important;
         }
 
         h1, h2, h3, .stMarkdown strong {
@@ -55,6 +70,10 @@ def inject_global_styles() -> None:
             border-right: 1px solid var(--border);
         }
 
+        [data-testid="stSidebar"] * {
+            color: #22272e;
+        }
+
         [data-testid="stMetric"] {
             background: var(--card);
             border: 1px solid var(--border);
@@ -64,7 +83,7 @@ def inject_global_styles() -> None:
         }
 
         .hero {
-            background: linear-gradient(130deg, #fff2e4 0%, #ffffff 65%);
+            background: linear-gradient(130deg, #fff5eb 0%, #ffffff 65%);
             border: 1px solid var(--border);
             border-radius: 18px;
             padding: 24px 24px 20px 24px;
@@ -126,13 +145,37 @@ def inject_global_styles() -> None:
         .pill {
             display: inline-block;
             background: var(--accent-soft);
-            border: 1px solid #f4ceb8;
-            color: #8a3717;
+            border: 1px solid #e7bca4;
+            color: #6f2b12;
             border-radius: 999px;
             padding: 4px 10px;
             font-size: 0.8rem;
             font-weight: 600;
             margin: 0 6px 6px 0;
+        }
+
+        textarea,
+        input,
+        [data-baseweb="select"] > div,
+        [data-baseweb="input"] > div {
+            background: #ffffff !important;
+            color: var(--ink) !important;
+            border-color: #c8ccd3 !important;
+        }
+
+        [data-baseweb="select"] *,
+        [data-baseweb="input"] * {
+            color: var(--ink) !important;
+        }
+
+        [data-testid="stTextArea"] label,
+        [data-testid="stTextInput"] label,
+        [data-testid="stNumberInput"] label,
+        [data-testid="stSelectbox"] label,
+        [data-testid="stSlider"] label,
+        [data-testid="stRadio"] label {
+            color: #1f2329 !important;
+            font-weight: 600;
         }
 
         div[data-testid="stProgressBar"] > div > div > div {
